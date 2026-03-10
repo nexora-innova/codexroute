@@ -1,0 +1,26 @@
+# Configuración local (no publicar)
+/config/codexroute/
+.env
+.env.local
+*.log
+
+# IDE / editor
+.idea/
+.vscode/
+*.sublime-*
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Dependencias (si se usan)
+node_modules/
+vendor/
+
+# Build / cache
+*.cache
+/dist/
+
+# Tests (opcional: quitar si quieres publicar tests)
+# /coverage/
+# .phpunit.result.cache

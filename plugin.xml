@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<root>
+    <name>CodexRoute</name>
+    <key>codexroute</key>
+    <state>stable</state>
+    <logo>https://github.com/nexora-innova/codexroute/raw/main/pics/codexroute.png</logo>
+    <description>
+        <short>
+            <en>Security and Performance Plugin for GLPI</en>
+            <es>Plugin de Seguridad y Rendimiento para GLPI</es>
+        </short>
+        <long>
+            <en>CodexRoute provides ID encryption, route validation, and performance optimization tools for GLPI. It protects against IDOR vulnerabilities and includes database analysis features.</en>
+            <es>CodexRoute proporciona encriptación de IDs, validación de rutas y herramientas de optimización de rendimiento para GLPI. Protege contra vulnerabilidades IDOR e incluye características de análisis de base de datos.</es>
+        </long>
+    </description>
+    <homepage>https://github.com/nexora-innova/codexroute</homepage>
+    <download>https://github.com/nexora-innova/codexroute/releases</download>
+    <issues>https://github.com/nexora-innova/codexroute/issues</issues>
+    <readme>https://github.com/nexora-innova/codexroute/blob/main/README.md</readme>
+    <authors>
+        <author>Devanta</author>
+    </authors>
+    <versions>
+        <version>
+            <num>1.0.0</num>
+            <compatibility>~10.0</compatibility>
+            <download_url>https://github.com/nexora-innova/codexroute/releases/download/1.0.0/codexroute-1.0.0.tar.gz</download_url>
+        </version>
+    </versions>
+    <langs>
+        <lang>en_GB</lang>
+        <lang>es_ES</lang>
+    </langs>
+    <license>GPL v3</license>
+    <tags>
+        <en>
+            <tag>security</tag>
+            <tag>encryption</tag>
+            <tag>performance</tag>
+            <tag>optimization</tag>
+            <tag>IDOR</tag>
+        </en>
+        <es>
+            <tag>seguridad</tag>
+            <tag>encriptación</tag>
+            <tag>rendimiento</tag>
+            <tag>optimización</tag>
+            <tag>IDOR</tag>
+        </es>
+    </tags>
+    <screenshots></screenshots>
+</root>
+

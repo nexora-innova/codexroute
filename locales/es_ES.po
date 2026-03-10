@@ -1,0 +1,218 @@
+# CodexRoute Spanish Translation
+msgid ""
+msgstr ""
+"Project-Id-Version: CodexRoute 1.0.0\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2025-01-01 00:00+0000\n"
+"PO-Revision-Date: 2025-01-01 00:00+0000\n"
+"Last-Translator: \n"
+"Language-Team: Spanish\n"
+"Language: es_ES\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+
+msgid "CodexRoute"
+msgstr "CodexRoute"
+
+msgid "CodexRoute Configuration"
+msgstr "Configuración de CodexRoute"
+
+msgid "CodexRoute - Panel de Administración"
+msgstr "CodexRoute - Panel de Administración"
+
+msgid "Validación de IDs"
+msgstr "Validación de IDs"
+
+msgid "Permisos de Rutas"
+msgstr "Permisos de Rutas"
+
+msgid "Configuración Encriptación"
+msgstr "Configuración de Encriptación"
+
+msgid "Rendimiento Apache/PHP"
+msgstr "Rendimiento Apache/PHP"
+
+msgid "Rendimiento Base de Datos"
+msgstr "Rendimiento de Base de Datos"
+
+msgid "Progreso de Validación"
+msgstr "Progreso de Validación"
+
+msgid "Total de Rutas"
+msgstr "Total de Rutas"
+
+msgid "Con Validación"
+msgstr "Con Validación"
+
+msgid "Sin Validación"
+msgstr "Sin Validación"
+
+msgid "Progreso"
+msgstr "Progreso"
+
+msgid "Acciones"
+msgstr "Acciones"
+
+msgid "Analizar Rutas"
+msgstr "Analizar Rutas"
+
+msgid "Aplicar Validación Automática"
+msgstr "Aplicar Validación Automática"
+
+msgid "Detectar Parámetros Especiales"
+msgstr "Detectar Parámetros Especiales"
+
+msgid "Rutas con ID"
+msgstr "Rutas con ID"
+
+msgid "Archivo"
+msgstr "Archivo"
+
+msgid "Ruta"
+msgstr "Ruta"
+
+msgid "Estado"
+msgstr "Estado"
+
+msgid "Validado"
+msgstr "Validado"
+
+msgid "Pendiente"
+msgstr "Pendiente"
+
+msgid "Aplicar"
+msgstr "Aplicar"
+
+msgid "Gestión de Permisos de Rutas"
+msgstr "Gestión de Permisos de Rutas"
+
+msgid "Rutas Problemáticas"
+msgstr "Rutas Problemáticas"
+
+msgid "Parámetros"
+msgstr "Parámetros"
+
+msgid "Permitida"
+msgstr "Permitida"
+
+msgid "Bloqueada"
+msgstr "Bloqueada"
+
+msgid "Permitir"
+msgstr "Permitir"
+
+msgid "Bloquear"
+msgstr "Bloquear"
+
+msgid "Remover"
+msgstr "Remover"
+
+msgid "Rutas Permitidas Actualmente"
+msgstr "Rutas Permitidas Actualmente"
+
+msgid "No hay rutas permitidas configuradas"
+msgstr "No hay rutas permitidas configuradas"
+
+msgid "Configuración de Encriptación de IDs"
+msgstr "Configuración de Encriptación de IDs"
+
+msgid "Seguridad"
+msgstr "Seguridad"
+
+msgid "Modo Estricto"
+msgstr "Modo Estricto"
+
+msgid "Registrar IDs Numéricos"
+msgstr "Registrar IDs Numéricos"
+
+msgid "Registrar Eventos de Seguridad"
+msgstr "Registrar Eventos de Seguridad"
+
+msgid "Rendimiento"
+msgstr "Rendimiento"
+
+msgid "Tamaño Máximo del Caché"
+msgstr "Tamaño Máximo del Caché"
+
+msgid "TTL del Caché (segundos)"
+msgstr "TTL del Caché (segundos)"
+
+msgid "Protección contra Ataques"
+msgstr "Protección contra Ataques"
+
+msgid "Bloquear IP después de intentos"
+msgstr "Bloquear IP después de intentos"
+
+msgid "Duración del Bloqueo (segundos)"
+msgstr "Duración del Bloqueo (segundos)"
+
+msgid "Guardar Configuración"
+msgstr "Guardar Configuración"
+
+msgid "Generar Archivo de Configuración"
+msgstr "Generar Archivo de Configuración"
+
+msgid "Configuración PHP"
+msgstr "Configuración PHP"
+
+msgid "Versión PHP"
+msgstr "Versión PHP"
+
+msgid "Memory Limit"
+msgstr "Límite de Memoria"
+
+msgid "Max Execution Time"
+msgstr "Tiempo Máximo de Ejecución"
+
+msgid "Analizar Rendimiento Apache/PHP"
+msgstr "Analizar Rendimiento Apache/PHP"
+
+msgid "Estado de la Base de Datos"
+msgstr "Estado de la Base de Datos"
+
+msgid "Host"
+msgstr "Host"
+
+msgid "Base de Datos"
+msgstr "Base de Datos"
+
+msgid "Consulta Simple"
+msgstr "Consulta Simple"
+
+msgid "Conectado"
+msgstr "Conectado"
+
+msgid "Acciones de Análisis"
+msgstr "Acciones de Análisis"
+
+msgid "Analizar BD"
+msgstr "Analizar BD"
+
+msgid "Profiling SQL"
+msgstr "Profiling SQL"
+
+msgid "Analizar Vistas"
+msgstr "Analizar Vistas"
+
+msgid "Optimización de Tablas"
+msgstr "Optimización de Tablas"
+
+msgid "Tabla"
+msgstr "Tabla"
+
+msgid "Descripción"
+msgstr "Descripción"
+
+msgid "Optimizar"
+msgstr "Optimizar"
+
+msgid "Resultados"
+msgstr "Resultados"
+
+msgid "Procesando..."
+msgstr "Procesando..."
+
+msgid "Información:"
+msgstr "Información:"
+

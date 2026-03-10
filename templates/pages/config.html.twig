@@ -1,0 +1,212 @@
+{#
+ # CodexRoute - Panel de Administración
+ #
+ # @copyright 2025
+ # @license   GPLv3 https://www.gnu.org/licenses/gpl-3.0.html
+ #}
+
+{% set active_tab = active_tab|default(ordered_tabs[0].key) %}
+
+<div class="container-fluid">
+    <div class="row">
+        <!-- Sidebar vertical con tabs - estilo GLPI -->
+        <div class="col-12 col-lg-3 col-xl-2 mb-4 mb-lg-0">
+            <div class="card">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h3 class="card-title mb-0 d-flex align-items-center gap-2">
+                        <img src="{{ plugin_logo_url }}" alt="CodexRoute" class="codexroute-sidebar-logo" width="28" height="28">
+                        {{ __('CodexRoute', 'codexroute') }}
+                    </h3>
+                    <button type="button" 
+                            class="btn btn-sm btn-ghost-secondary" 
+                            onclick="toggleTabsOrder()"
+                            title="{{ __('Reordenar tabs', 'codexroute') }}">
+                        <i class="ti ti-arrows-sort"></i>
+                    </button>
+                </div>
+                <div class="list-group list-group-flush" id="tabs-list">
+                    {% for tab in ordered_tabs %}
+                        {% set is_active = active_tab == tab.key %}
+                        {% set completion = tabs_completion[tab.key] %}
+                        <a href="?tab={{ tab.key }}" 
+                           class="list-group-item list-group-item-action {{ is_active ? 'active' : '' }} d-flex align-items-center"
+                           data-tab-key="{{ tab.key }}">
+                            <span class="badge bg-primary me-2" style="min-width: 24px;">{{ tab.step }}</span>
+                            <i class="fa-fw {{ tab.icon }} me-1"></i>
+                            <span class="flex-grow-1">{{ tab.title }}</span>
+                            {% if completion.completed %}
+                                <i class="ti ti-check text-success ms-auto" title="{{ __('Completado', 'codexroute') }}"></i>
+                            {% endif %}
+                        </a>
+                    {% endfor %}
+                </div>
+                
+                <!-- Panel de reordenamiento (oculto por defecto) -->
+                <div class="card-body border-top" id="tabs-order-panel" style="display: none;">
+                    <h6 class="mb-2">{{ __('Reordenar Tabs', 'codexroute') }}</h6>
+                    <div class="list-group list-group-flush" id="tabs-order-list">
+                        {% for tab in ordered_tabs %}
+                            <div class="list-group-item d-flex align-items-center" data-tab-key="{{ tab.key }}">
+                                <i class="ti ti-grip-vertical text-muted me-2" style="cursor: move;"></i>
+                                <i class="fa-fw {{ tab.icon }} me-2"></i>
+                                <span class="flex-grow-1">{{ tab.title }}</span>
+                                <div class="btn-group btn-group-sm">
+                                    <button type="button" 
+                                            class="btn btn-ghost-secondary" 
+                                            onclick="moveTabUp('{{ tab.key }}')"
+                                            {{ loop.first ? 'disabled' : '' }}
+                                            title="{{ __('Mover arriba', 'codexroute') }}">
+                                        <i class="ti ti-arrow-up"></i>
+                                    </button>
+                                    <button type="button" 
+                                            class="btn btn-ghost-secondary" 
+                                            onclick="moveTabDown('{{ tab.key }}')"
+                                            {{ loop.last ? 'disabled' : '' }}
+                                            title="{{ __('Mover abajo', 'codexroute') }}">
+                                        <i class="ti ti-arrow-down"></i>
+                                    </button>
+                                </div>
+                            </div>
+                        {% endfor %}
+                    </div>
+                    <div class="d-flex gap-2 mt-3">
+                        <button type="button" class="btn btn-sm btn-primary" onclick="saveTabsOrder()">
+                            <i class="ti ti-device-floppy"></i> {{ __('Guardar Orden', 'codexroute') }}
+                        </button>
+                        <button type="button" class="btn btn-sm btn-secondary" onclick="resetTabsOrder()">
+                            <i class="ti ti-rotate-clockwise"></i> {{ __('Restaurar', 'codexroute') }}
+                        </button>
+                        <button type="button" class="btn btn-sm btn-ghost-secondary" onclick="toggleTabsOrder()">
+                            {{ __('Cancelar', 'codexroute') }}
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Contenido principal -->
+        <div class="col-12 col-lg-9 col-xl-10">
+            {% if active_tab == 'routes' %}
+                {% include '@codexroute/pages/tabs/routes.html.twig' with {
+                    'problematic_routes': problematic_routes,
+                    'allowed_routes': allowed_routes
+                } %}
+            {% elseif active_tab == 'config' %}
+                {% include '@codexroute/pages/tabs/config.html.twig' with {
+                    'encryption_config': encryption_config
+                } %}
+            {% elseif active_tab == 'apache' %}
+                {% include '@codexroute/pages/tabs/apache.html.twig' with {
+                    'php_info': php_info
+                } %}
+            {% elseif active_tab == 'database' %}
+                {% include '@codexroute/pages/tabs/database.html.twig' with {
+                    'db_status': db_status,
+                    'optimizable_tables': optimizable_tables
+                } %}
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<div id="codexroute-loader" class="codexroute-loader" style="display: none;">
+    <div class="codexroute-loader-content">
+        <div class="codexroute-spinner"></div>
+        <p id="codexroute-loader-text">{{ __('Procesando...', 'codexroute') }}</p>
+    </div>
+</div>
+
+<script>
+let currentTabsOrder = {{ ordered_tabs|map(t => t.key)|json_encode|raw }};
+let originalTabsOrder = {{ ordered_tabs|map(t => t.key)|json_encode|raw }};
+
+function switchTab(tab) {
+    window.location.href = '?tab=' + tab;
+}
+
+function toggleTabsOrder() {
+    const panel = document.getElementById('tabs-order-panel');
+    const list = document.getElementById('tabs-list');
+    
+    if (panel.style.display === 'none') {
+        panel.style.display = 'block';
+        list.style.display = 'none';
+    } else {
+        panel.style.display = 'none';
+        list.style.display = 'block';
+    }
+}
+
+function moveTabUp(tabKey) {
+    const index = currentTabsOrder.indexOf(tabKey);
+    if (index > 0) {
+        [currentTabsOrder[index], currentTabsOrder[index - 1]] = [currentTabsOrder[index - 1], currentTabsOrder[index]];
+        updateTabsOrderDisplay();
+    }
+}
+
+function moveTabDown(tabKey) {
+    const index = currentTabsOrder.indexOf(tabKey);
+    if (index < currentTabsOrder.length - 1) {
+        [currentTabsOrder[index], currentTabsOrder[index + 1]] = [currentTabsOrder[index + 1], currentTabsOrder[index]];
+        updateTabsOrderDisplay();
+    }
+}
+
+function updateTabsOrderDisplay() {
+    const orderList = document.getElementById('tabs-order-list');
+    const tabs = Array.from(orderList.children);
+    
+    // Reordenar según currentTabsOrder
+    currentTabsOrder.forEach((tabKey, index) => {
+        const tabElement = tabs.find(el => el.dataset.tabKey === tabKey);
+        if (tabElement) {
+            orderList.appendChild(tabElement);
+            
+            // Actualizar botones disabled
+            const upBtn = tabElement.querySelector('button[onclick*="moveTabUp"]');
+            const downBtn = tabElement.querySelector('button[onclick*="moveTabDown"]');
+            
+            if (upBtn) upBtn.disabled = (index === 0);
+            if (downBtn) downBtn.disabled = (index === currentTabsOrder.length - 1);
+        }
+    });
+}
+
+function saveTabsOrder() {
+    const form = document.createElement('form');
+    form.method = 'POST';
+    form.action = window.location.pathname + '?tab=' + '{{ active_tab }}';
+    
+    const input = document.createElement('input');
+    input.type = 'hidden';
+    input.name = 'tabs_order';
+    input.value = JSON.stringify(currentTabsOrder);
+    form.appendChild(input);
+    
+    const submitInput = document.createElement('input');
+    submitInput.type = 'hidden';
+    submitInput.name = 'save_tabs_order';
+    submitInput.value = '1';
+    form.appendChild(submitInput);
+    
+    // Agregar CSRF token si existe
+    const csrfToken = document.querySelector('input[name="_glpi_csrf_token"]');
+    if (csrfToken) {
+        const csrfInput = document.createElement('input');
+        csrfInput.type = 'hidden';
+        csrfInput.name = '_glpi_csrf_token';
+        csrfInput.value = csrfToken.value;
+        form.appendChild(csrfInput);
+    }
+    
+    document.body.appendChild(form);
+    form.submit();
+}
+
+function resetTabsOrder() {
+    currentTabsOrder = [...originalTabsOrder];
+    updateTabsOrderDisplay();
+}
+</script>
+

@@ -1,0 +1,39 @@
+{
+    "name": "codexroute/glpi-codexroute",
+    "description": "Security and Performance Plugin for GLPI - ID encryption, route validation, and performance optimization tools",
+    "type": "glpi-plugin",
+    "keywords": [
+        "GLPI",
+        "plugins",
+        "security",
+        "encryption",
+        "performance",
+        "IDOR",
+        "optimization"
+    ],
+    "homepage": "https://github.com/example/codexroute",
+    "license": "GPL-3.0-or-later",
+    "authors": [
+        {
+            "name": "Devanta",
+            "role": "Developer"
+        }
+    ],
+    "require": {
+        "php": ">=7.4"
+    },
+    "require-dev": {
+        "phpunit/phpunit": "^9.5|^10.0"
+    },
+    "autoload": {
+        "psr-4": {
+            "GlpiPlugin\\Codexroute\\": "src/"
+        }
+    },
+    "config": {
+        "platform": {
+            "php": "7.4"
+        }
+    }
+}
+

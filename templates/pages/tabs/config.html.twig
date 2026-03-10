@@ -1,0 +1,178 @@
+{#
+ # CodexRoute - Pestaña de Configuración de Encriptación
+ #}
+
+{% import 'components/form/fields_macros.html.twig' as fields %}
+{% import 'components/alerts_macros.html.twig' as alerts %}
+
+<div class="tab-pane fade show active" id="config-tab">
+    <div class="card">
+        <div class="card-header">
+            <h3 class="card-title mb-0">
+                {{ __('Configuración de Encriptación de IDs', 'codexroute') }}
+            </h3>
+        </div>
+        <div class="card-body">
+            {% if config_file_exists %}
+                {{ alerts.alert_success(
+                    __('Archivo de configuración generado', 'codexroute'),
+                    __('El archivo de configuración ya existe. Los cambios que guardes se reflejarán automáticamente en el archivo.', 'codexroute')
+                ) }}
+            {% else %}
+                {{ alerts.alert_info(
+                    __('Información:', 'codexroute'),
+                    [
+                        __('Configura los valores y luego genera el archivo de configuración.', 'codexroute'),
+                        __('Una vez generado, los cambios que guardes se actualizarán automáticamente en el archivo.', 'codexroute')
+                    ]
+                ) }}
+            {% endif %}
+            
+            <form id="encryption-config-form" method="post" action="">
+                <div class="row">
+                    <div class="col-md-4">
+                        <div class="card border-primary mb-3">
+                            <div class="card-header bg-primary text-white">
+                                <h4 class="card-title mb-0">
+                                    <i class="ti ti-shield"></i> {{ __('Seguridad', 'codexroute') }}
+                                </h4>
+                            </div>
+                            <div class="card-body">
+                        
+                        {{ fields.checkboxField(
+                            'strict_mode',
+                            encryption_config.strict_mode ? 1 : 0,
+                            __('Modo Estricto', 'codexroute'),
+                            {
+                                'add_field_html': '<small class="form-text text-muted d-block mt-1">' ~ __('Rechaza IDs numéricos sin encriptar.', 'codexroute') ~ '</small>',
+                                'full_width': true,
+                                'mb': 'mb-3'
+                            }
+                        ) }}
+                        
+                        {{ fields.checkboxField(
+                            'log_numeric_ids',
+                            encryption_config.log_numeric_ids ? 1 : 0,
+                            __('Registrar IDs Numéricos', 'codexroute'),
+                            {
+                                'add_field_html': '<small class="form-text text-muted d-block mt-1">' ~ __('Registra en logs cuando se recibe un ID sin encriptar.', 'codexroute') ~ '</small>',
+                                'full_width': true,
+                                'mb': 'mb-3'
+                            }
+                        ) }}
+                        
+                        {{ fields.checkboxField(
+                            'log_security',
+                            encryption_config.log_security ? 1 : 0,
+                            __('Registrar Eventos de Seguridad', 'codexroute'),
+                            {
+                                'add_field_html': '<small class="form-text text-muted d-block mt-1">' ~ __('Registra eventos de seguridad en los logs.', 'codexroute') ~ '</small>',
+                                'full_width': true,
+                                'mb': 'mb-3'
+                            }
+                        ) }}
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="col-md-4">
+                        <div class="card border-success mb-3">
+                            <div class="card-header bg-success text-white">
+                                <h4 class="card-title mb-0">
+                                    <i class="ti ti-gauge"></i> {{ __('Rendimiento', 'codexroute') }}
+                                </h4>
+                            </div>
+                            <div class="card-body">
+                        
+                        {{ fields.numberField(
+                            'cache_size',
+                            encryption_config.cache_size,
+                            __('Tamaño Máximo del Caché', 'codexroute'),
+                            {
+                                'min': 50,
+                                'max': 500,
+                                'step': 1,
+                                'add_field_html': '<small class="form-text text-muted">' ~ __('Número máximo de entradas en el caché. Valores recomendados: 50-200', 'codexroute') ~ '</small>',
+                                'full_width': true,
+                                'mb': 'mb-3'
+                            }
+                        ) }}
+                        
+                        {{ fields.numberField(
+                            'cache_ttl',
+                            encryption_config.cache_ttl,
+                            __('TTL del Caché (segundos)', 'codexroute'),
+                            {
+                                'min': 60,
+                                'max': 3600,
+                                'step': 60,
+                                'add_field_html': '<small class="form-text text-muted">' ~ __('Tiempo de vida de las entradas del caché.', 'codexroute') ~ '</small>',
+                                'full_width': true,
+                                'mb': 'mb-3'
+                            }
+                        ) }}
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="col-md-4">
+                        <div class="card border-danger mb-3">
+                            <div class="card-header bg-danger text-white">
+                                <h4 class="card-title mb-0">
+                                    <i class="ti ti-ban"></i> {{ __('Protección contra Ataques', 'codexroute') }}
+                                </h4>
+                            </div>
+                            <div class="card-body">
+                        
+                        {{ fields.numberField(
+                            'block_after_attempts',
+                            encryption_config.block_after_attempts,
+                            __('Bloquear IP después de intentos', 'codexroute'),
+                            {
+                                'min': 5,
+                                'max': 100,
+                                'step': 1,
+                                'add_field_html': '<small class="form-text text-muted">' ~ __('Número de intentos fallidos antes de bloquear una IP.', 'codexroute') ~ '</small>',
+                                'full_width': true,
+                                'mb': 'mb-3'
+                            }
+                        ) }}
+                        
+                        {{ fields.numberField(
+                            'block_duration',
+                            encryption_config.block_duration,
+                            __('Duración del Bloqueo (segundos)', 'codexroute'),
+                            {
+                                'min': 300,
+                                'max': 86400,
+                                'step': 300,
+                                'add_field_html': '<small class="form-text text-muted">' ~ __('Tiempo que una IP permanece bloqueada.', 'codexroute') ~ '</small>',
+                                'full_width': true,
+                                'mb': 'mb-3'
+                            }
+                        ) }}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="d-flex gap-2 mt-3">
+                    <button type="button" class="btn btn-primary" onclick="saveEncryptionConfig()" id="btn-save-config">
+                        <i class="ti ti-device-floppy"></i> {{ __('Guardar Configuración', 'codexroute') }}
+                    </button>
+                    <button type="button" 
+                            class="btn btn-secondary" 
+                            onclick="generateConfigFile()" 
+                            id="btn-generate-config">
+                        <i class="ti ti-file-code"></i> 
+                        {% if config_file_exists %}
+                            {{ __('Regenerar Archivo de Configuración', 'codexroute') }}
+                        {% else %}
+                            {{ __('Generar Archivo de Configuración', 'codexroute') }}
+                        {% endif %}
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>

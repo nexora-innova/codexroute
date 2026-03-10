@@ -1,0 +1,218 @@
+# CodexRoute English Translation
+msgid ""
+msgstr ""
+"Project-Id-Version: CodexRoute 1.0.0\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2025-01-01 00:00+0000\n"
+"PO-Revision-Date: 2025-01-01 00:00+0000\n"
+"Last-Translator: \n"
+"Language-Team: English\n"
+"Language: en_GB\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+
+msgid "CodexRoute"
+msgstr "CodexRoute"
+
+msgid "CodexRoute Configuration"
+msgstr "CodexRoute Configuration"
+
+msgid "CodexRoute - Panel de Administración"
+msgstr "CodexRoute - Administration Panel"
+
+msgid "Validación de IDs"
+msgstr "ID Validation"
+
+msgid "Permisos de Rutas"
+msgstr "Route Permissions"
+
+msgid "Configuración Encriptación"
+msgstr "Encryption Configuration"
+
+msgid "Rendimiento Apache/PHP"
+msgstr "Apache/PHP Performance"
+
+msgid "Rendimiento Base de Datos"
+msgstr "Database Performance"
+
+msgid "Progreso de Validación"
+msgstr "Validation Progress"
+
+msgid "Total de Rutas"
+msgstr "Total Routes"
+
+msgid "Con Validación"
+msgstr "With Validation"
+
+msgid "Sin Validación"
+msgstr "Without Validation"
+
+msgid "Progreso"
+msgstr "Progress"
+
+msgid "Acciones"
+msgstr "Actions"
+
+msgid "Analizar Rutas"
+msgstr "Analyze Routes"
+
+msgid "Aplicar Validación Automática"
+msgstr "Apply Automatic Validation"
+
+msgid "Detectar Parámetros Especiales"
+msgstr "Detect Special Parameters"
+
+msgid "Rutas con ID"
+msgstr "Routes with ID"
+
+msgid "Archivo"
+msgstr "File"
+
+msgid "Ruta"
+msgstr "Route"
+
+msgid "Estado"
+msgstr "Status"
+
+msgid "Validado"
+msgstr "Validated"
+
+msgid "Pendiente"
+msgstr "Pending"
+
+msgid "Aplicar"
+msgstr "Apply"
+
+msgid "Gestión de Permisos de Rutas"
+msgstr "Route Permissions Management"
+
+msgid "Rutas Problemáticas"
+msgstr "Problematic Routes"
+
+msgid "Parámetros"
+msgstr "Parameters"
+
+msgid "Permitida"
+msgstr "Allowed"
+
+msgid "Bloqueada"
+msgstr "Blocked"
+
+msgid "Permitir"
+msgstr "Allow"
+
+msgid "Bloquear"
+msgstr "Block"
+
+msgid "Remover"
+msgstr "Remove"
+
+msgid "Rutas Permitidas Actualmente"
+msgstr "Currently Allowed Routes"
+
+msgid "No hay rutas permitidas configuradas"
+msgstr "No allowed routes configured"
+
+msgid "Configuración de Encriptación de IDs"
+msgstr "ID Encryption Configuration"
+
+msgid "Seguridad"
+msgstr "Security"
+
+msgid "Modo Estricto"
+msgstr "Strict Mode"
+
+msgid "Registrar IDs Numéricos"
+msgstr "Log Numeric IDs"
+
+msgid "Registrar Eventos de Seguridad"
+msgstr "Log Security Events"
+
+msgid "Rendimiento"
+msgstr "Performance"
+
+msgid "Tamaño Máximo del Caché"
+msgstr "Maximum Cache Size"
+
+msgid "TTL del Caché (segundos)"
+msgstr "Cache TTL (seconds)"
+
+msgid "Protección contra Ataques"
+msgstr "Attack Protection"
+
+msgid "Bloquear IP después de intentos"
+msgstr "Block IP after attempts"
+
+msgid "Duración del Bloqueo (segundos)"
+msgstr "Block Duration (seconds)"
+
+msgid "Guardar Configuración"
+msgstr "Save Configuration"
+
+msgid "Generar Archivo de Configuración"
+msgstr "Generate Configuration File"
+
+msgid "Configuración PHP"
+msgstr "PHP Configuration"
+
+msgid "Versión PHP"
+msgstr "PHP Version"
+
+msgid "Memory Limit"
+msgstr "Memory Limit"
+
+msgid "Max Execution Time"
+msgstr "Max Execution Time"
+
+msgid "Analizar Rendimiento Apache/PHP"
+msgstr "Analyze Apache/PHP Performance"
+
+msgid "Estado de la Base de Datos"
+msgstr "Database Status"
+
+msgid "Host"
+msgstr "Host"
+
+msgid "Base de Datos"
+msgstr "Database"
+
+msgid "Consulta Simple"
+msgstr "Simple Query"
+
+msgid "Conectado"
+msgstr "Connected"
+
+msgid "Acciones de Análisis"
+msgstr "Analysis Actions"
+
+msgid "Analizar BD"
+msgstr "Analyze DB"
+
+msgid "Profiling SQL"
+msgstr "SQL Profiling"
+
+msgid "Analizar Vistas"
+msgstr "Analyze Views"
+
+msgid "Optimización de Tablas"
+msgstr "Table Optimization"
+
+msgid "Tabla"
+msgstr "Table"
+
+msgid "Descripción"
+msgstr "Description"
+
+msgid "Optimizar"
+msgstr "Optimize"
+
+msgid "Resultados"
+msgstr "Results"
+
+msgid "Procesando..."
+msgstr "Processing..."
+
+msgid "Información:"
+msgstr "Information:"
+
