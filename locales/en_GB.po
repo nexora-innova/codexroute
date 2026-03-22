@@ -216,3 +216,123 @@ msgstr "Processing..."
 msgid "Información:"
 msgstr "Information:"
 
+msgid "Access denied: numeric IDs are not allowed."
+msgstr "Access denied: numeric IDs are not allowed."
+
+msgid "Access denied: invalid ID."
+msgstr "Access denied: invalid ID."
+
+msgid "Access denied."
+msgstr "Access denied."
+
+msgid "No active session. Please log in."
+msgstr "No active session. Please log in."
+
+msgid "Access denied. Configuration permissions are required."
+msgstr "Access denied. Configuration permissions are required."
+
+msgid "No action was specified."
+msgstr "No action was specified."
+
+msgid "Security error: CSRF token was not provided."
+msgstr "Security error: CSRF token was not provided."
+
+msgid "Security error: invalid or expired CSRF token. Please reload the page."
+msgstr "Security error: invalid or expired CSRF token. Please reload the page."
+
+msgid "Invalid action."
+msgstr "Invalid action."
+
+msgid "File not specified."
+msgstr "File not specified."
+
+msgid "Route \"%s\" has been allowed."
+msgstr "Route \"%s\" has been allowed."
+
+msgid "Could not allow route \"%s\"."
+msgstr "Could not allow route \"%s\"."
+
+msgid "Route \"%s\" has been blocked."
+msgstr "Route \"%s\" has been blocked."
+
+msgid "Could not block route \"%s\"."
+msgstr "Could not block route \"%s\"."
+
+msgid "Configuration saved and configuration file updated successfully."
+msgstr "Configuration saved and configuration file updated successfully."
+
+msgid "Configuration saved in the database. Could not update the configuration file on disk."
+msgstr "Configuration saved in the database. Could not update the configuration file on disk."
+
+msgid "Configuration saved successfully. Generate the configuration file when you are ready."
+msgstr "Configuration saved successfully. Generate the configuration file when you are ready."
+
+msgid "Configuration file generated successfully."
+msgstr "Configuration file generated successfully."
+
+msgid "Unknown action: %s"
+msgstr "Unknown action: %s"
+
+msgid "Plugin is not installed or activated."
+msgstr "Plugin is not installed or activated."
+
+msgid "Missing ID parameter."
+msgstr "Missing ID parameter."
+
+msgid "Invalid ID format."
+msgstr "Invalid ID format."
+
+msgid "ID must be greater than zero."
+msgstr "ID must be greater than zero."
+
+msgid "IDEncryption class is not available."
+msgstr "IDEncryption class is not available."
+
+msgid "Encryption error: %s"
+msgstr "Encryption error: %s"
+
+msgid "Reorder tabs"
+msgstr "Reorder tabs"
+
+msgid "Completed"
+msgstr "Completed"
+
+msgid "Move up"
+msgstr "Move up"
+
+msgid "Move down"
+msgstr "Move down"
+
+msgid "Save order"
+msgstr "Save order"
+
+msgid "Processing..."
+msgstr "Processing..."
+
+msgid "Cancel"
+msgstr "Cancel"
+
+msgid "Restore"
+msgstr "Restore"
+
+msgid "Loading..."
+msgstr "Loading..."
+
+msgid "Security and performance settings"
+msgstr "Security and performance settings"
+
+msgid "Options"
+msgstr "Options"
+
+msgid "Section"
+msgstr "Section"
+
+msgid "Drag is not required: use the arrows to change order, then save."
+msgstr "Drag is not required: use the arrows to change order, then save."
+
+msgid "Extensión"
+msgstr "Extension"
+
+msgid "Filtrar por estado"
+msgstr "Filter by status"
+

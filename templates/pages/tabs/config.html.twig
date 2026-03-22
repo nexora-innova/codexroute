@@ -1,17 +1,12 @@
 {#
- # CodexRoute - Pestaña de Configuración de Encriptación
+ # CodexRoute - Pestaña de Configuración de Encriptación (layout alineado con formularios nativos GLPI)
  #}
 
 {% import 'components/form/fields_macros.html.twig' as fields %}
 {% import 'components/alerts_macros.html.twig' as alerts %}
 
-<div class="tab-pane fade show active" id="config-tab">
-    <div class="card">
-        <div class="card-header">
-            <h3 class="card-title mb-0">
-                {{ __('Configuración de Encriptación de IDs', 'codexroute') }}
-            </h3>
-        </div>
+<div class="codexroute-plugin-pane codexroute-tab-pane" id="config-tab">
+    <div class="card card-sm mb-0">
         <div class="card-body">
             {% if config_file_exists %}
                 {{ alerts.alert_success(
@@ -27,18 +22,24 @@
                     ]
                 ) }}
             {% endif %}
-            
+
             <form id="encryption-config-form" method="post" action="">
-                <div class="row">
-                    <div class="col-md-4">
-                        <div class="card border-primary mb-3">
-                            <div class="card-header bg-primary text-white">
-                                <h4 class="card-title mb-0">
-                                    <i class="ti ti-shield"></i> {{ __('Seguridad', 'codexroute') }}
-                                </h4>
-                            </div>
-                            <div class="card-body">
-                        
+                <h4 class="mb-3 pb-2 border-bottom text-muted text-uppercase fs-6 fw-semibold">
+                    <i class="ti ti-shield me-2"></i>{{ __('Seguridad', 'codexroute') }}
+                </h4>
+                <div class="row flex-row mb-4">
+                    <div class="col-12 col-xxl-10">
+                        {{ fields.checkboxField(
+                            'encryption_enabled',
+                            encryption_config.encryption_enabled ? 1 : 0,
+                            __('Activar Encriptación de IDs', 'codexroute'),
+                            {
+                                'add_field_html': '<small class="form-text text-muted d-block mt-1">' ~ __('Encripta los IDs numéricos en todas las URLs. Desactiva para deshabilitar completamente la encriptación.', 'codexroute') ~ '</small>',
+                                'full_width': true,
+                                'mb': 'mb-3'
+                            }
+                        ) }}
+
                         {{ fields.checkboxField(
                             'strict_mode',
                             encryption_config.strict_mode ? 1 : 0,
@@ -49,7 +50,7 @@
                                 'mb': 'mb-3'
                             }
                         ) }}
-                        
+
                         {{ fields.checkboxField(
                             'log_numeric_ids',
                             encryption_config.log_numeric_ids ? 1 : 0,
@@ -60,7 +61,7 @@
                                 'mb': 'mb-3'
                             }
                         ) }}
-                        
+
                         {{ fields.checkboxField(
                             'log_security',
                             encryption_config.log_security ? 1 : 0,
@@ -68,22 +69,17 @@
                             {
                                 'add_field_html': '<small class="form-text text-muted d-block mt-1">' ~ __('Registra eventos de seguridad en los logs.', 'codexroute') ~ '</small>',
                                 'full_width': true,
-                                'mb': 'mb-3'
+                                'mb': 'mb-0'
                             }
                         ) }}
-                            </div>
-                        </div>
                     </div>
-                    
-                    <div class="col-md-4">
-                        <div class="card border-success mb-3">
-                            <div class="card-header bg-success text-white">
-                                <h4 class="card-title mb-0">
-                                    <i class="ti ti-gauge"></i> {{ __('Rendimiento', 'codexroute') }}
-                                </h4>
-                            </div>
-                            <div class="card-body">
-                        
+                </div>
+
+                <h4 class="mb-3 pb-2 border-bottom text-muted text-uppercase fs-6 fw-semibold">
+                    <i class="ti ti-gauge me-2"></i>{{ __('Rendimiento', 'codexroute') }}
+                </h4>
+                <div class="row flex-row mb-4">
+                    <div class="col-12 col-md-6 col-xxl-5">
                         {{ fields.numberField(
                             'cache_size',
                             encryption_config.cache_size,
@@ -97,7 +93,8 @@
                                 'mb': 'mb-3'
                             }
                         ) }}
-                        
+                    </div>
+                    <div class="col-12 col-md-6 col-xxl-5">
                         {{ fields.numberField(
                             'cache_ttl',
                             encryption_config.cache_ttl,
@@ -108,22 +105,17 @@
                                 'step': 60,
                                 'add_field_html': '<small class="form-text text-muted">' ~ __('Tiempo de vida de las entradas del caché.', 'codexroute') ~ '</small>',
                                 'full_width': true,
-                                'mb': 'mb-3'
+                                'mb': 'mb-0'
                             }
                         ) }}
-                            </div>
-                        </div>
                     </div>
-                    
-                    <div class="col-md-4">
-                        <div class="card border-danger mb-3">
-                            <div class="card-header bg-danger text-white">
-                                <h4 class="card-title mb-0">
-                                    <i class="ti ti-ban"></i> {{ __('Protección contra Ataques', 'codexroute') }}
-                                </h4>
-                            </div>
-                            <div class="card-body">
-                        
+                </div>
+
+                <h4 class="mb-3 pb-2 border-bottom text-muted text-uppercase fs-6 fw-semibold">
+                    <i class="ti ti-ban me-2"></i>{{ __('Protección contra Ataques', 'codexroute') }}
+                </h4>
+                <div class="row flex-row mb-2">
+                    <div class="col-12 col-md-6 col-xxl-5">
                         {{ fields.numberField(
                             'block_after_attempts',
                             encryption_config.block_after_attempts,
@@ -137,7 +129,8 @@
                                 'mb': 'mb-3'
                             }
                         ) }}
-                        
+                    </div>
+                    <div class="col-12 col-md-6 col-xxl-5">
                         {{ fields.numberField(
                             'block_duration',
                             encryption_config.block_duration,
@@ -148,23 +141,21 @@
                                 'step': 300,
                                 'add_field_html': '<small class="form-text text-muted">' ~ __('Tiempo que una IP permanece bloqueada.', 'codexroute') ~ '</small>',
                                 'full_width': true,
-                                'mb': 'mb-3'
+                                'mb': 'mb-0'
                             }
                         ) }}
-                            </div>
-                        </div>
                     </div>
                 </div>
-                
-                <div class="d-flex gap-2 mt-3">
+
+                <div class="d-flex flex-wrap gap-2 mt-4 pt-3 border-top">
                     <button type="button" class="btn btn-primary" onclick="saveEncryptionConfig()" id="btn-save-config">
-                        <i class="ti ti-device-floppy"></i> {{ __('Guardar Configuración', 'codexroute') }}
+                        <i class="ti ti-device-floppy me-1"></i>{{ __('Guardar Configuración', 'codexroute') }}
                     </button>
-                    <button type="button" 
-                            class="btn btn-secondary" 
-                            onclick="generateConfigFile()" 
+                    <button type="button"
+                            class="btn btn-outline-secondary"
+                            onclick="generateConfigFile()"
                             id="btn-generate-config">
-                        <i class="ti ti-file-code"></i> 
+                        <i class="ti ti-file-code me-1"></i>
                         {% if config_file_exists %}
                             {{ __('Regenerar Archivo de Configuración', 'codexroute') }}
                         {% else %}

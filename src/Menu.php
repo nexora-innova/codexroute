@@ -31,7 +31,7 @@ class Menu extends CommonGLPI {
         
         $menu = [
             'title' => self::getMenuName(),
-            'page'  => '/plugins/codexroute/front/config.form.php',
+            'page'  => Plugin::getWebDir('codexroute') . '/front/config.form.php',
             'icon'  => self::getIcon(),
         ];
         

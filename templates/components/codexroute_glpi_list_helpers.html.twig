@@ -1,0 +1,161 @@
+{#
+ # Helpers JS compartidos: pie tipo pager GLPI, tamaño de página y textos i18n del core.
+ # Incluir una vez por página (guard __codexrouteGlpiListHelpers evita redefinir).
+ #}
+<script>
+window.codexrouteGlpiListI18n = Object.assign({}, window.codexrouteGlpiListI18n || {}, {
+    showingRows: {{ __('Showing %s to %s of %s rows')|json_encode|raw }},
+    showingRowsMobile: {{ __('%s-%s/%s')|json_encode|raw }},
+    start: {{ __('Start')|json_encode|raw }},
+    previous: {{ __('Previous')|json_encode|raw }},
+    next: {{ __('Next')|json_encode|raw }},
+    end: {{ __('End')|json_encode|raw }},
+    rowsPerPageWrapper: {{ __('%s rows / page')|json_encode|raw }}
+});
+</script>
+<script>
+(function (w) {
+    if (w.__codexrouteGlpiListHelpers) {
+        return;
+    }
+    w.__codexrouteGlpiListHelpers = true;
+
+    w.codexrouteFormatI18n = function (template, values) {
+        if (!template) {
+            return '';
+        }
+        let i = 0;
+        return template.replace(/%[sd]/g, () => {
+            const v = values[i++];
+            return v !== undefined && v !== null ? String(v) : '';
+        });
+    };
+
+    w.codexrouteAttrEscape = function (s) {
+        return String(s ?? '').replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/</g, '&lt;');
+    };
+
+    w.codexrouteGetPageSizeForTable = function (tableId) {
+        const table = document.getElementById(tableId);
+        if (!table) {
+            return 20;
+        }
+        const card = table.closest('.search-card');
+        const sel = card ? card.querySelector('.search-limit-dropdown') : null;
+        const n = sel ? parseInt(sel.value, 10) : 20;
+        return Number.isFinite(n) && n > 0 ? n : 20;
+    };
+
+    w.codexrouteFillPageInfos = function (prefix, currentStart, currentEnd, total) {
+        const i18n = w.codexrouteGlpiListI18n || {};
+        const desk = document.getElementById(prefix + '-page-infos-desktop');
+        const mob = document.getElementById(prefix + '-page-infos-mobile');
+        if (desk) {
+            desk.textContent = w.codexrouteFormatI18n(i18n.showingRows, [currentStart, currentEnd, total]);
+        }
+        if (mob) {
+            mob.textContent = w.codexrouteFormatI18n(i18n.showingRowsMobile, [currentStart, currentEnd, total]);
+        }
+    };
+
+    w.codexrouteRenderGlpiPager = function (ulId, currentPage, totalPages, limit, goToPageFnName) {
+        const ul = document.getElementById(ulId);
+        if (!ul) {
+            return;
+        }
+        ul.innerHTML = '';
+        if (totalPages <= 1) {
+            return;
+        }
+        const i18n = w.codexrouteGlpiListI18n || {};
+        const isFirst = currentPage === 1;
+        const isLast = currentPage === totalPages;
+        const tStart = w.codexrouteAttrEscape(i18n.start);
+        const tPrev = w.codexrouteAttrEscape(i18n.previous);
+        const tNext = w.codexrouteAttrEscape(i18n.next);
+        const tEnd = w.codexrouteAttrEscape(i18n.end);
+
+        ul.insertAdjacentHTML('beforeend',
+            `<li class="page-item ${isFirst ? 'disabled' : ''}">` +
+            `<a class="page-link page-link-start" href="#" title="${tStart}" ` +
+            `${isFirst ? 'aria-disabled="true"' : ''} ` +
+            `onclick="${goToPageFnName}(1); return false;"><i class="ti ti-chevrons-left"></i></a></li>`);
+
+        ul.insertAdjacentHTML('beforeend',
+            `<li class="page-item ${isFirst ? 'disabled' : ''}">` +
+            `<a class="page-link page-link-prev" href="#" title="${tPrev}" ` +
+            `${isFirst ? 'aria-disabled="true"' : ''} ` +
+            `onclick="${goToPageFnName}(${currentPage - 1}); return false;"><i class="ti ti-chevron-left"></i></a></li>`);
+
+        const adjacents = 2;
+        let skipDots = false;
+        for (let page = 1; page <= totalPages; page++) {
+            if (currentPage - adjacents <= page && currentPage + adjacents >= page) {
+                const active = page === currentPage ? 'active selected' : '';
+                ul.insertAdjacentHTML('beforeend',
+                    `<li class="d-none d-sm-block page-item ${active}">` +
+                    `<a class="page-link page-link-num" href="#" onclick="${goToPageFnName}(${page}); return false;">${page}</a></li>`);
+                if (currentPage + adjacents === page) {
+                    skipDots = false;
+                }
+            } else if (!skipDots) {
+                skipDots = true;
+                ul.insertAdjacentHTML('beforeend',
+                    '<li class="d-none d-sm-block page-item disabled">' +
+                    '<a class="page-link" href="#" aria-disabled="true">...</a></li>');
+            }
+        }
+
+        ul.insertAdjacentHTML('beforeend',
+            `<li class="page-item ${isLast ? 'disabled' : ''}">` +
+            `<a class="page-link page-link-next" href="#" title="${tNext}" ` +
+            `${isLast ? 'aria-disabled="true"' : ''} ` +
+            `onclick="${goToPageFnName}(${currentPage + 1}); return false;"><i class="ti ti-chevron-right"></i></a></li>`);
+
+        ul.insertAdjacentHTML('beforeend',
+            `<li class="page-item ${isLast ? 'disabled' : ''}">` +
+            `<a class="page-link page-link-last" href="#" title="${tEnd}" ` +
+            `${isLast ? 'aria-disabled="true"' : ''} ` +
+            `onclick="${goToPageFnName}(${totalPages}); return false;"><i class="ti ti-chevrons-right"></i></a></li>`);
+    };
+
+    w.codexrouteLimitOptionValues = function () {
+        const base = [5, 10, 15, 20, 25, 30, 40, 50, 100, 200, 500];
+        const pref = parseInt(w.codexrouteGlpiListLimit, 10);
+        if (Number.isFinite(pref) && pref > 0 && !base.includes(pref)) {
+            base.push(pref);
+            base.sort((a, b) => a - b);
+        }
+        return base;
+    };
+
+    w.codexrouteBuildLimitSelectHtml = function (extraClass, selected) {
+        const sel = Number.isFinite(parseInt(selected, 10)) ? parseInt(selected, 10) : 20;
+        const opts = w.codexrouteLimitOptionValues();
+        const cls = String(extraClass || '').trim().replace(/[^a-zA-Z0-9_-]/g, '');
+        let html = '<select class="form-select form-select-sm mx-1 d-inline-block w-auto search-limit-dropdown' +
+            (cls ? ' ' + cls : '') + '">';
+        opts.forEach(function (v) {
+            html += '<option value="' + v + '"' + (v === sel ? ' selected' : '') + '>' + v + '</option>';
+        });
+        html += '</select>';
+        return html;
+    };
+
+    /**
+     * Genera el HTML interno del bloque search-pager (para contenido insertado por JS, p. ej. resultados AJAX).
+     */
+    w.codexrouteBuildSearchPagerInnerHtml = function (prefix, extraClass, selectedLimit, paginationUlId) {
+        const ulId = paginationUlId || (prefix + '-routes-pagination');
+        const selectHtml = w.codexrouteBuildLimitSelectHtml(extraClass, selectedLimit);
+        const wrap = (w.codexrouteGlpiListI18n || {}).rowsPerPageWrapper || '%s';
+        const rowLabel = wrap.replace('%s', selectHtml);
+        return '<div class="flex-grow-1 d-flex flex-wrap flex-md-nowrap align-items-center justify-content-between mb-2 search-pager">' +
+            '<span class="search-limit d-none d-md-block">' + rowLabel + '</span>' +
+            '<span class="search-limit d-block d-md-none">' + selectHtml + '</span>' +
+            '<p class="m-0 text-muted d-none d-md-block page-infos" id="' + w.codexrouteAttrEscape(prefix) + '-page-infos-desktop"></p>' +
+            '<p class="m-0 text-muted d-block d-md-none text-nowrap ms-2 page-infos" id="' + w.codexrouteAttrEscape(prefix) + '-page-infos-mobile"></p>' +
+            '<ul class="pagination m-0 mt-sm-2 mt-md-0" id="' + w.codexrouteAttrEscape(ulId) + '"></ul></div>';
+    };
+}(window));
+</script>

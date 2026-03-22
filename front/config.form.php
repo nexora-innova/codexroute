@@ -4,7 +4,10 @@
  * CodexRoute - Panel de Administración
  */
 
-include('../../../inc/includes.php');
+if (!defined('GLPI_ROOT')) {
+    define('GLPI_ROOT', dirname(__DIR__, 3));
+}
+include GLPI_ROOT . '/inc/includes.php';
 
 use GlpiPlugin\Codexroute\IDEncryption;
 use GlpiPlugin\Codexroute\Config;
@@ -32,7 +35,7 @@ if (class_exists('GlpiPlugin\Codexroute\IDEncryption') && isset($_GET['id']) && 
                 $_SERVER['REMOTE_ADDR'] ?? 'unknown'
             ));
             http_response_code(403);
-            Html::displayRightError("Access denied: Numeric IDs are not allowed");
+            Html::displayRightError(__('Access denied: numeric IDs are not allowed.', 'codexroute'));
             exit;
         } else {
             $_GET['id'] = (int)$raw_id;
@@ -46,13 +49,13 @@ if (class_exists('GlpiPlugin\Codexroute\IDEncryption') && isset($_GET['id']) && 
         
         if ($decrypted_id === false) {
             http_response_code(403);
-            Html::displayRightError("Access denied: Invalid ID");
+            Html::displayRightError(__('Access denied: invalid ID.', 'codexroute'));
             exit;
         }
         
         if (!IDEncryption::validateAuthorization($decrypted_id, 'Config', READ)) {
             http_response_code(403);
-            Html::displayRightError("Access denied");
+            Html::displayRightError(__('Access denied.', 'codexroute'));
             exit;
         }
         
@@ -62,7 +65,12 @@ if (class_exists('GlpiPlugin\Codexroute\IDEncryption') && isset($_GET['id']) && 
 
 Session::checkRight("config", UPDATE);
 
-Html::header(__('CodexRoute - Panel de Administración', 'codexroute'), '', 'config', 'codexroute');
+Html::header(
+    __('CodexRoute', 'codexroute'),
+    $_SERVER['PHP_SELF'] ?? '',
+    'plugins',
+    'codexroute'
+);
 
 // Obtener orden de tabs y establecer tab por defecto
 $ordered_tabs = Config::getOrderedTabs();
@@ -90,23 +98,16 @@ $encryption_config = Config::getEncryptionConfig();
 $allowed_routes = Config::getAllowedRoutes();
 $tabs_completion = Config::getTabsCompletionStatus();
 
-global $CFG_GLPI;
-$root_doc = $CFG_GLPI['root_doc'] ?? '';
-$plugin_pics = dirname(__DIR__) . '/pics';
-$logo_file = 'codexroute.svg';
-foreach (['codexroute.jpg', 'codexroute.jpeg', 'codexroute.png', 'codexroute.svg'] as $candidate) {
-    if (file_exists($plugin_pics . '/' . $candidate)) {
-        $logo_file = $candidate;
-        break;
-    }
-}
 $template_data = [
     'active_tab' => $tab,
     'encryption_config' => $encryption_config,
     'allowed_routes' => $allowed_routes,
     'ordered_tabs' => $ordered_tabs,
+    'tabs_order_keys' => array_map(static function (array $t) {
+        return $t['key'];
+    }, $ordered_tabs),
     'tabs_completion' => $tabs_completion,
-    'plugin_logo_url' => $root_doc . '/plugins/codexroute/pics/' . $logo_file,
+    'glpi_list_limit' => (int) ($_SESSION['glpilist_limit'] ?? 20),
 ];
 
 switch ($tab) {

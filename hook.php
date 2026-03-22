@@ -46,10 +46,18 @@ PHP;
         }
     }
 
-    $routes_config_file = $plugin_config_dir . '/allowed_routes.php';
-    if (!file_exists($routes_config_file)) {
-        $default_routes = "<?php\nreturn [];\n";
-        if (@file_put_contents($routes_config_file, $default_routes) === false) {
+    $routes_config_file_json = $plugin_config_dir . '/allowed_routes.json';
+    $routes_config_file_php  = $plugin_config_dir . '/allowed_routes.php';
+    if (!file_exists($routes_config_file_json)) {
+        $initial_routes = [];
+        if (file_exists($routes_config_file_php)) {
+            $old = @include $routes_config_file_php;
+            if (is_array($old)) {
+                $initial_routes = $old;
+            }
+            @unlink($routes_config_file_php);
+        }
+        if (@file_put_contents($routes_config_file_json, json_encode($initial_routes, JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT)) === false) {
             return false;
         }
     }
@@ -157,7 +165,9 @@ function plugin_codexroute_uninstall() {
     if (is_dir($plugin_config_dir)) {
         $files = [
             $plugin_config_dir . '/encryption_config.php',
-            $plugin_config_dir . '/allowed_routes.php'
+            $plugin_config_dir . '/allowed_routes.php',
+            $plugin_config_dir . '/allowed_routes.json',
+            $plugin_config_dir . '/blocked_routes.json',
         ];
         
         foreach ($files as $file) {

@@ -49,6 +49,9 @@
             <tag>IDOR</tag>
         </es>
     </tags>
-    <screenshots></screenshots>
+    <screenshots>
+        <screenshot>https://github.com/nexora-innova/codexroute/raw/main/pics/codexroute.png</screenshot>
+        <screenshot>https://github.com/nexora-innova/codexroute/raw/main/pics/screenshot-admin-config.png</screenshot>
+    </screenshots>
 </root>
 

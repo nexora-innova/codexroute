@@ -4,115 +4,119 @@
 
 {% import 'components/alerts_macros.html.twig' as alerts %}
 
-<div class="tab-pane fade show active" id="routes-tab">
-    <div class="card mb-3">
-        <div class="card-header">
-            <h3 class="card-title mb-0">{{ __('Gestión de Permisos de Rutas', 'codexroute') }}</h3>
-        </div>
-        <div class="card-body">
+<div class="codexroute-plugin-pane codexroute-tab-pane d-flex flex-column gap-3" id="routes-tab">
+    <div class="card card-sm">
+        <div class="card-body py-3">
             {{ alerts.alert_info(
                 __('Información:', 'codexroute'),
                 __('Esta sección permite corregir los permisos de rutas que están siendo bloqueadas con error 403.', 'codexroute')
             ) }}
-        </div>
-    </div>
-    
-    <div class="card mb-3">
-        <div class="card-header d-flex justify-content-between align-items-center">
-            <h3 class="card-title mb-0">
-                <i class="ti ti-alert-triangle"></i> 
-                {{ __('Rutas Problemáticas', 'codexroute') }}
-            </h3>
-            <div class="d-flex gap-2">
-                <div class="input-group input-group-sm" style="max-width: 250px;">
-                    <span class="input-group-text"><i class="ti ti-search"></i></span>
-                    <input type="text" 
-                           class="form-control" 
-                           id="problematic-search" 
-                           placeholder="{{ __('Buscar ruta...', 'codexroute') }}"
-                           onkeyup="filterProblematicRoutes()">
-                </div>
-                <div class="btn-group btn-group-sm" role="group">
-                    <input type="radio" class="btn-check" name="filter-problematic-status" id="filter-problematic-all" value="all" checked onchange="filterProblematicRoutes()">
-                    <label class="btn btn-outline-secondary" for="filter-problematic-all">{{ __('Todas', 'codexroute') }}</label>
-                    
-                    <input type="radio" class="btn-check" name="filter-problematic-status" id="filter-problematic-allowed" value="allowed" onchange="filterProblematicRoutes()">
-                    <label class="btn btn-outline-success" for="filter-problematic-allowed">{{ __('Permitidas', 'codexroute') }}</label>
-                    
-                    <input type="radio" class="btn-check" name="filter-problematic-status" id="filter-problematic-blocked" value="blocked" onchange="filterProblematicRoutes()">
-                    <label class="btn btn-outline-danger" for="filter-problematic-blocked">{{ __('Bloqueadas', 'codexroute') }}</label>
-                </div>
+            <div class="d-flex flex-wrap gap-2 mt-3">
+                <button type="button" class="btn btn-sm btn-outline-primary"
+                        onclick="scanRoutes(this)"
+                        title="{{ __('Re-analizar y refrescar la lista de rutas bloqueadas', 'codexroute') }}">
+                    <i class="ti ti-refresh me-1"></i>{{ __('Re-analizar Rutas', 'codexroute') }}
+                </button>
+                {% set has_blocked = false %}
+                {% for route in problematic_routes %}
+                    {% if not route.allowed %}{% set has_blocked = true %}{% endif %}
+                {% endfor %}
+                {% if has_blocked %}
+                <button type="button" class="btn btn-sm btn-success"
+                        onclick="allowAllBlockedRoutes(this)"
+                        title="{{ __('Permitir todas las rutas bloqueadas detectadas de una vez', 'codexroute') }}">
+                    <i class="ti ti-shield-check me-1"></i>{{ __('Permitir Todas las Bloqueadas', 'codexroute') }}
+                </button>
+                {% endif %}
             </div>
         </div>
-        <div class="card-body">
+    </div>
+
+    <div class="search_page codexroute-embedded-search">
+        <div class="search-container disable-overflow-y">
+            <div class="card card-sm mt-0 search-card">
             {% if problematic_routes is empty %}
-                <div class="text-center py-5">
-                    <i class="ti ti-inbox fs-1 text-muted mb-3"></i>
-                    <p class="text-muted">{{ __('No se encontraron rutas problemáticas', 'codexroute') }}</p>
+                <div class="alert alert-info mb-0 rounded-0 border-top-0 border-bottom-0 border-end-0" role="alert">
+                    {{ __('No se encontraron rutas problemáticas', 'codexroute') }}
                 </div>
             {% else %}
-                <div class="table-responsive">
-                    <table class="table table-hover" id="problematic-routes-table">
+                <div class="card-header d-flex justify-content-between search-header pe-0 flex-wrap align-items-center gap-2 py-2">
+                    <h3 class="card-title mb-0 fs-5">{{ __('Rutas Problemáticas', 'codexroute') }}</h3>
+                    <div class="d-flex flex-column flex-sm-row flex-wrap align-items-stretch align-items-sm-center gap-2 ms-lg-auto">
+                        <div class="input-group input-group-sm flex-grow-1" style="min-width: 12rem; max-width: 100%;">
+                            <span class="input-group-text" aria-hidden="true"><i class="ti ti-search"></i></span>
+                            <input type="text"
+                                   class="form-control"
+                                   id="problematic-search"
+                                   placeholder="{{ __('Buscar ruta...', 'codexroute') }}"
+                                   onkeyup="filterProblematicRoutes()">
+                        </div>
+                        <div class="btn-group btn-group-sm flex-shrink-0" role="group" aria-label="{{ __('Filtrar por estado', 'codexroute') }}">
+                            <input type="radio" class="btn-check" name="filter-problematic-status" id="filter-problematic-all" value="all" checked onchange="filterProblematicRoutes()">
+                            <label class="btn btn-outline-secondary" for="filter-problematic-all">{{ __('Todas', 'codexroute') }}</label>
+                            <input type="radio" class="btn-check" name="filter-problematic-status" id="filter-problematic-allowed" value="allowed" onchange="filterProblematicRoutes()">
+                            <label class="btn btn-outline-success" for="filter-problematic-allowed">{{ __('Permitidas', 'codexroute') }}</label>
+                            <input type="radio" class="btn-check" name="filter-problematic-status" id="filter-problematic-blocked" value="blocked" onchange="filterProblematicRoutes()">
+                            <label class="btn btn-outline-danger" for="filter-problematic-blocked">{{ __('Bloqueadas', 'codexroute') }}</label>
+                        </div>
+                    </div>
+                </div>
+                <div class="table-responsive-lg">
+                    <table class="search-results table card-table table-hover table-striped" id="problematic-routes-table">
                         <thead>
                             <tr>
                                 <th style="width: 4%; min-width: 40px;">#</th>
-                                <th style="width: 30%;">{{ __('Archivo', 'codexroute') }}</th>
-                                <th style="width: 25%;">{{ __('Ruta', 'codexroute') }}</th>
-                                <th style="width: 20%;">{{ __('Parámetros', 'codexroute') }}</th>
-                                <th style="width: 12%; min-width: 120px;" class="text-center">{{ __('Estado', 'codexroute') }}</th>
-                                <th style="width: 12%; min-width: 100px;" class="text-center">{{ __('Acción', 'codexroute') }}</th>
+                                <th>{{ __('Archivo', 'codexroute') }}</th>
+                                <th>{{ __('Ruta', 'codexroute') }}</th>
+                                <th>{{ __('Parámetros', 'codexroute') }}</th>
+                                <th class="text-center" style="min-width: 120px;">{{ __('Estado', 'codexroute') }}</th>
+                                <th class="text-center" style="min-width: 100px;">{{ __('Acción', 'codexroute') }}</th>
                             </tr>
                         </thead>
                         <tbody>
                             {% for route in problematic_routes %}
-                            <tr class="problematic-route-row" 
+                            <tr class="problematic-route-row"
                                 data-status="{{ route.allowed ? 'allowed' : 'blocked' }}"
                                 data-file="{{ route.file|lower|e }}"
                                 data-path="{{ route.path|lower|e }}">
                                 <td class="text-muted">{{ loop.index }}</td>
                                 <td>
-                                    <div class="d-flex align-items-center">
-                                        <i class="ti ti-file-code text-muted me-2"></i>
-                                        <span class="text-truncate" style="max-width: 300px;" title="{{ route.file|e }}">
-                                            <code>{{ route.file|e }}</code>
-                                        </span>
-                                    </div>
-                                </td>
-                                <td>
-                                    <code class="text-primary">{{ route.path|e }}</code>
-                                </td>
-                                <td>
-                                    <div class="d-flex flex-wrap gap-1" style="min-height: 24px;">
-                                        {% for param in route.params %}
-                                            <span class="badge text-white" style="background-color: #0dcaf0; white-space: nowrap; font-size: 0.7rem; padding: 0.25em 0.6em; font-weight: 500;">{{ param|e }}</span>
-                                        {% endfor %}
-                                    </div>
-                                </td>
-                                <td class="text-center" style="min-width: 120px;">
-                                    {% if route.allowed %}
-                                        <span class="badge text-white d-inline-flex align-items-center" style="background-color: #198754; white-space: nowrap; font-size: 0.75rem; padding: 0.4em 0.7em; font-weight: 500;">
-                                            <i class="ti ti-check me-1" style="font-size: 0.85em;"></i>
-                                            <span>{{ __('Permitida', 'codexroute') }}</span>
-                                        </span>
-                                    {% else %}
-                                        <span class="badge text-white d-inline-flex align-items-center" style="background-color: #dc3545; white-space: nowrap; font-size: 0.75rem; padding: 0.4em 0.7em; font-weight: 500;">
-                                            <i class="ti ti-x me-1" style="font-size: 0.85em;"></i>
-                                            <span>{{ __('Bloqueada', 'codexroute') }}</span>
+                                    <span class="text-break d-inline-block mw-100" title="{{ route.file|e }}">{{ route.file|e }}</span>
+                                    {% if route.detected is defined and route.detected %}
+                                        <span class="badge bg-warning text-dark ms-1" title="{{ __('Detectada automáticamente por el plugin', 'codexroute') }}">
+                                            <i class="ti ti-radar me-1"></i>{{ __('Detectada', 'codexroute') }}
                                         </span>
                                     {% endif %}
                                 </td>
-                                <td class="text-center">
+                                <td>
+                                    <span class="text-break text-muted">{{ route.path|e }}</span>
+                                </td>
+                                <td>
+                                    {% if route.params is empty %}
+                                        <span class="text-muted">—</span>
+                                    {% else %}
+                                        <span class="text-muted">{% for param in route.params %}{{ param|e }}{% if not loop.last %}, {% endif %}{% endfor %}</span>
+                                    {% endif %}
+                                </td>
+                                <td class="text-center" style="min-width: 120px;">
+                                    {% if route.allowed %}
+                                        <span class="text-success fw-medium">{{ __('Permitida', 'codexroute') }}</span>
+                                    {% else %}
+                                        <span class="text-danger fw-medium">{{ __('Bloqueada', 'codexroute') }}</span>
+                                    {% endif %}
+                                </td>
+                                <td class="text-center text-nowrap">
                                     {% if not route.allowed %}
-                                        <button class="btn btn-sm btn-success" 
-                                                onclick="allowRoute('{{ route.file|e('js') }}')"
+                                        <button type="button" class="btn btn-sm btn-success"
+                                                onclick="allowRoute('{{ route.file|e('js') }}', this)"
                                                 title="{{ __('Permitir esta ruta', 'codexroute') }}">
-                                            <i class="ti ti-check"></i> {{ __('Permitir', 'codexroute') }}
+                                            <i class="ti ti-shield-check me-1"></i>{{ __('Permitir', 'codexroute') }}
                                         </button>
                                     {% else %}
-                                        <button class="btn btn-sm btn-danger" 
-                                                onclick="blockRoute('{{ route.file|e('js') }}')"
+                                        <button type="button" class="btn btn-sm btn-outline-danger"
+                                                onclick="blockRoute('{{ route.file|e('js') }}', this)"
                                                 title="{{ __('Bloquear esta ruta', 'codexroute') }}">
-                                            <i class="ti ti-ban"></i> {{ __('Bloquear', 'codexroute') }}
+                                            <i class="ti ti-shield-x me-1"></i>{{ __('Bloquear', 'codexroute') }}
                                         </button>
                                     {% endif %}
                                 </td>
@@ -121,87 +125,58 @@
                         </tbody>
                     </table>
                 </div>
-                <div class="mt-3 pt-3 border-top">
-                    <div class="d-flex flex-column flex-lg-row justify-content-between align-items-start align-items-lg-center gap-3">
-                        <div class="flex-grow-1" style="min-width: 0; writing-mode: horizontal-tb !important; text-orientation: mixed !important; direction: ltr !important;">
-                            <div class="text-muted small mb-1" id="problematic-footer-text" style="writing-mode: horizontal-tb !important; text-orientation: mixed !important; direction: ltr !important; white-space: nowrap !important; display: inline-block !important; width: 100%; max-width: 100%; overflow: visible !important;">
-                                <span id="problematic-count" style="display: inline !important; white-space: normal !important;">{{ problematic_routes|length }}</span> 
-                                <span style="display: inline !important; white-space: normal !important;">{{ __('de', 'codexroute') }}</span> 
-                                <strong style="display: inline !important; white-space: normal !important;">{{ problematic_routes|length }}</strong> 
-                                <span style="display: inline !important; white-space: normal !important;">{{ __('rutas', 'codexroute') }}</span>
-                            </div>
-                            <div id="problematic-pagination-info" class="text-muted small" style="display: none; writing-mode: horizontal-tb !important; text-orientation: mixed !important; direction: ltr !important; white-space: nowrap !important; display: inline-block !important; width: 100%; max-width: 100%; overflow: visible !important;">
-                                <span style="display: inline !important; white-space: normal !important;">{{ __('Mostrando', 'codexroute') }}</span> 
-                                <span id="problematic-page-start" style="display: inline !important; white-space: normal !important;">1</span>
-                                <span style="display: inline !important; white-space: normal !important;">-</span>
-                                <span id="problematic-page-end" style="display: inline !important; white-space: normal !important;">{{ problematic_routes|length }}</span> 
-                                <span style="display: inline !important; white-space: normal !important;">{{ __('de', 'codexroute') }}</span> 
-                                <strong id="problematic-total-filtered" style="display: inline !important; white-space: normal !important;">{{ problematic_routes|length }}</strong>
-                            </div>
-                        </div>
-                        <div class="flex-shrink-0" style="writing-mode: horizontal-tb !important; text-orientation: mixed !important; direction: ltr !important;">
-                            <nav aria-label="{{ __('Paginación de rutas problemáticas', 'codexroute') }}" style="writing-mode: horizontal-tb !important; text-orientation: mixed !important; direction: ltr !important;">
-                                <ul class="pagination pagination-sm mb-0" id="problematic-routes-pagination" style="writing-mode: horizontal-tb !important; text-orientation: mixed !important; direction: ltr !important;">
-                                </ul>
-                            </nav>
-                        </div>
-                    </div>
+                <div class="card-footer search-footer">
+                    {% include '@codexroute/components/codexroute_search_pager.html.twig' with {
+                        prefix: 'codexroute-problematic',
+                        limit_select_extra_class: 'codexroute-limit-problematic'
+                    } %}
                 </div>
             {% endif %}
-        </div>
-    </div>
-    
-    <div class="card">
-        <div class="card-header d-flex justify-content-between align-items-center">
-            <h3 class="card-title mb-0">
-                <i class="ti ti-check-circle"></i> 
-                {{ __('Rutas Permitidas Actualmente', 'codexroute') }}
-            </h3>
-            <div class="d-flex gap-2">
-                <div class="input-group input-group-sm" style="max-width: 250px;">
-                    <span class="input-group-text"><i class="ti ti-search"></i></span>
-                    <input type="text" 
-                           class="form-control" 
-                           id="allowed-search" 
-                           placeholder="{{ __('Buscar ruta...', 'codexroute') }}"
-                           onkeyup="filterAllowedRoutes()">
-                </div>
             </div>
         </div>
-        <div class="card-body">
+    </div>
+
+    <div class="search_page codexroute-embedded-search">
+        <div class="search-container disable-overflow-y">
+            <div class="card card-sm mt-0 search-card">
             {% if allowed_routes is empty %}
-                <div class="text-center py-5">
-                    <i class="ti ti-inbox fs-1 text-muted mb-3"></i>
-                    <p class="text-muted">{{ __('No hay rutas permitidas configuradas', 'codexroute') }}</p>
+                <div class="alert alert-info mb-0 rounded-0 border-top-0 border-bottom-0 border-end-0" role="alert">
+                    {{ __('No hay rutas permitidas configuradas', 'codexroute') }}
                 </div>
             {% else %}
-                <div class="table-responsive">
-                    <table class="table table-hover" id="allowed-routes-table">
+                <div class="card-header d-flex justify-content-between search-header pe-0 flex-wrap align-items-center gap-2 py-2">
+                    <h3 class="card-title mb-0 fs-5">{{ __('Rutas Permitidas Actualmente', 'codexroute') }}</h3>
+                    <div class="input-group input-group-sm flex-grow-1 flex-sm-grow-0 ms-lg-auto" style="min-width: 12rem; max-width: 100%;">
+                        <span class="input-group-text" aria-hidden="true"><i class="ti ti-search"></i></span>
+                        <input type="text"
+                               class="form-control"
+                               id="allowed-search"
+                               placeholder="{{ __('Buscar ruta...', 'codexroute') }}"
+                               onkeyup="filterAllowedRoutes()">
+                    </div>
+                </div>
+                <div class="table-responsive-lg">
+                    <table class="search-results table card-table table-hover table-striped" id="allowed-routes-table">
                         <thead>
                             <tr>
                                 <th style="width: 4%; min-width: 40px;">#</th>
-                                <th style="width: 80%;">{{ __('Archivo', 'codexroute') }}</th>
-                                <th style="width: 16%; min-width: 100px;" class="text-center">{{ __('Acción', 'codexroute') }}</th>
+                                <th>{{ __('Archivo', 'codexroute') }}</th>
+                                <th class="text-center" style="min-width: 100px;">{{ __('Acción', 'codexroute') }}</th>
                             </tr>
                         </thead>
                         <tbody>
                             {% for route in allowed_routes %}
-                            <tr class="allowed-route-row" 
+                            <tr class="allowed-route-row"
                                 data-file="{{ route|lower|e }}">
                                 <td class="text-muted">{{ loop.index }}</td>
                                 <td>
-                                    <div class="d-flex align-items-center">
-                                        <i class="ti ti-file-code text-muted me-2"></i>
-                                        <span class="text-truncate" style="max-width: 600px;" title="{{ route|e }}">
-                                            <code>{{ route|e }}</code>
-                                        </span>
-                                    </div>
+                                    <span class="text-break d-inline-block mw-100" title="{{ route|e }}">{{ route|e }}</span>
                                 </td>
-                                <td class="text-center">
-                                    <button class="btn btn-sm btn-danger" 
-                                            onclick="blockRoute('{{ route|e('js') }}')"
+                                <td class="text-center text-nowrap">
+                                    <button type="button" class="btn btn-sm btn-outline-danger"
+                                            onclick="blockRoute('{{ route|e('js') }}', this)"
                                             title="{{ __('Remover esta ruta de las permitidas', 'codexroute') }}">
-                                        <i class="ti ti-trash"></i> {{ __('Remover', 'codexroute') }}
+                                        <i class="ti ti-shield-x me-1"></i>{{ __('Remover', 'codexroute') }}
                                     </button>
                                 </td>
                             </tr>
@@ -209,343 +184,215 @@
                         </tbody>
                     </table>
                 </div>
-                <div class="mt-3 pt-3 border-top">
-                    <div class="d-flex flex-column flex-lg-row justify-content-between align-items-start align-items-lg-center gap-3">
-                        <div class="flex-grow-1" style="min-width: 0; writing-mode: horizontal-tb !important; text-orientation: mixed !important; direction: ltr !important;">
-                            <div class="text-muted small mb-1" id="allowed-footer-text" style="writing-mode: horizontal-tb !important; text-orientation: mixed !important; direction: ltr !important; white-space: nowrap !important; display: inline-block !important; width: 100%; max-width: 100%; overflow: visible !important;">
-                                <span id="allowed-count" style="display: inline !important; white-space: normal !important;">{{ allowed_routes|length }}</span> 
-                                <span style="display: inline !important; white-space: normal !important;">{{ __('de', 'codexroute') }}</span> 
-                                <strong style="display: inline !important; white-space: normal !important;">{{ allowed_routes|length }}</strong> 
-                                <span style="display: inline !important; white-space: normal !important;">{{ __('rutas', 'codexroute') }}</span>
-                            </div>
-                            <div id="allowed-pagination-info" class="text-muted small" style="display: none; writing-mode: horizontal-tb !important; text-orientation: mixed !important; direction: ltr !important; white-space: nowrap !important; display: inline-block !important; width: 100%; max-width: 100%; overflow: visible !important;">
-                                <span style="display: inline !important; white-space: normal !important;">{{ __('Mostrando', 'codexroute') }}</span> 
-                                <span id="allowed-page-start" style="display: inline !important; white-space: normal !important;">1</span>
-                                <span style="display: inline !important; white-space: normal !important;">-</span>
-                                <span id="allowed-page-end" style="display: inline !important; white-space: normal !important;">{{ allowed_routes|length }}</span> 
-                                <span style="display: inline !important; white-space: normal !important;">{{ __('de', 'codexroute') }}</span> 
-                                <strong id="allowed-total-filtered" style="display: inline !important; white-space: normal !important;">{{ allowed_routes|length }}</strong>
-                            </div>
-                        </div>
-                        <div class="flex-shrink-0" style="writing-mode: horizontal-tb !important; text-orientation: mixed !important; direction: ltr !important;">
-                            <nav aria-label="{{ __('Paginación de rutas permitidas', 'codexroute') }}" style="writing-mode: horizontal-tb !important; text-orientation: mixed !important; direction: ltr !important;">
-                                <ul class="pagination pagination-sm mb-0" id="allowed-routes-pagination" style="writing-mode: horizontal-tb !important; text-orientation: mixed !important; direction: ltr !important;">
-                                </ul>
-                            </nav>
-                        </div>
-                    </div>
+                <div class="card-footer search-footer">
+                    {% include '@codexroute/components/codexroute_search_pager.html.twig' with {
+                        prefix: 'codexroute-allowed',
+                        limit_select_extra_class: 'codexroute-limit-allowed'
+                    } %}
                 </div>
             {% endif %}
+            </div>
         </div>
     </div>
 </div>
 
+{% include '@codexroute/components/codexroute_glpi_list_helpers.html.twig' %}
 <script>
-// Funciones para Rutas Problemáticas
 let problematicAllRows = [];
 let problematicCurrentPage = 1;
-const problematicItemsPerPage = 20;
 let problematicAllVisibleRows = [];
 
 function filterProblematicRoutes() {
     const searchTerm = document.getElementById('problematic-search')?.value.toLowerCase() || '';
     const filterStatus = document.querySelector('input[name="filter-problematic-status"]:checked')?.value || 'all';
-    
+
     if (problematicAllRows.length === 0) {
         problematicAllRows = Array.from(document.querySelectorAll('#problematic-routes-table tbody .problematic-route-row'));
     }
-    
-    problematicAllRows.forEach(row => {
+
+    problematicAllRows.forEach((row) => {
         row.style.display = 'none';
     });
-    
+
     problematicAllVisibleRows = [];
-    
+
     problematicAllRows.forEach((row) => {
         const file = (row.dataset.file || '').toLowerCase();
         const path = (row.dataset.path || '').toLowerCase();
         const status = row.dataset.status || '';
-        
+
         const matchesSearch = searchTerm === '' || file.includes(searchTerm) || path.includes(searchTerm);
-        const matchesFilter = filterStatus === 'all' || 
-                             (filterStatus === 'allowed' && status === 'allowed') ||
-                             (filterStatus === 'blocked' && status === 'blocked');
-        
+        const matchesFilter = filterStatus === 'all'
+            || (filterStatus === 'allowed' && status === 'allowed')
+            || (filterStatus === 'blocked' && status === 'blocked');
+
         if (matchesSearch && matchesFilter) {
             problematicAllVisibleRows.push(row);
         }
     });
-    
+
     problematicCurrentPage = 1;
     updateProblematicPagination();
     displayProblematicPage();
 }
 
 function displayProblematicPage() {
-    const start = (problematicCurrentPage - 1) * problematicItemsPerPage;
-    const end = start + problematicItemsPerPage;
-    
+    const limit = window.codexrouteGetPageSizeForTable('problematic-routes-table');
+    const start = (problematicCurrentPage - 1) * limit;
+    const end = start + limit;
+    const total = problematicAllVisibleRows.length;
+
     problematicAllVisibleRows.forEach((row, index) => {
-        if (index >= start && index < end) {
-            row.style.display = '';
-        } else {
-            row.style.display = 'none';
-        }
+        row.style.display = (index >= start && index < end) ? '' : 'none';
     });
-    
-    const pageStart = problematicAllVisibleRows.length > 0 ? start + 1 : 0;
-    const pageEnd = Math.min(end, problematicAllVisibleRows.length);
-    
-    const countEl = document.getElementById('problematic-count');
-    const startEl = document.getElementById('problematic-page-start');
-    const endEl = document.getElementById('problematic-page-end');
-    const totalEl = document.getElementById('problematic-total-filtered');
-    const infoEl = document.getElementById('problematic-pagination-info');
-    
-    if (countEl) countEl.textContent = problematicAllVisibleRows.length;
-    if (startEl) startEl.textContent = pageStart;
-    if (endEl) endEl.textContent = pageEnd;
-    if (totalEl) totalEl.textContent = problematicAllVisibleRows.length;
-    
-    if (infoEl) {
-        if (problematicAllVisibleRows.length > problematicItemsPerPage) {
-            infoEl.style.display = 'block';
-        } else {
-            infoEl.style.display = 'none';
-        }
+
+    if (total === 0) {
+        window.codexrouteFillPageInfos('codexroute-problematic', 0, 0, 0);
+    } else {
+        const pageStart = start + 1;
+        const pageEnd = Math.min(end, total);
+        window.codexrouteFillPageInfos('codexroute-problematic', pageStart, pageEnd, total);
     }
 }
 
 function updateProblematicPagination() {
-    const totalPages = Math.ceil(problematicAllVisibleRows.length / problematicItemsPerPage);
-    const pagination = document.getElementById('problematic-routes-pagination');
-    if (!pagination) return;
-    
-    pagination.innerHTML = '';
-    
-    if (totalPages <= 1) {
-        return;
+    const limit = window.codexrouteGetPageSizeForTable('problematic-routes-table');
+    const total = problematicAllVisibleRows.length;
+    const totalPages = Math.max(1, Math.ceil(total / limit));
+    if (problematicCurrentPage > totalPages) {
+        problematicCurrentPage = totalPages;
     }
-    
-    const prevLi = document.createElement('li');
-    prevLi.className = `page-item ${problematicCurrentPage === 1 ? 'disabled' : ''}`;
-    prevLi.innerHTML = `<a class="page-link" href="#" onclick="goToProblematicPage(${problematicCurrentPage - 1}); return false;">
-        <i class="ti ti-chevron-left"></i> <span class="d-none d-sm-inline">Anterior</span>
-    </a>`;
-    pagination.appendChild(prevLi);
-    
-    const maxVisible = 5;
-    let startPage = Math.max(1, problematicCurrentPage - Math.floor(maxVisible / 2));
-    let endPage = Math.min(totalPages, startPage + maxVisible - 1);
-    
-    if (endPage - startPage < maxVisible - 1) {
-        startPage = Math.max(1, endPage - maxVisible + 1);
-    }
-    
-    if (startPage > 1) {
-        const firstLi = document.createElement('li');
-        firstLi.className = 'page-item';
-        firstLi.innerHTML = `<a class="page-link" href="#" onclick="goToProblematicPage(1); return false;">1</a>`;
-        pagination.appendChild(firstLi);
-        
-        if (startPage > 2) {
-            const dotsLi = document.createElement('li');
-            dotsLi.className = 'page-item disabled';
-            dotsLi.innerHTML = `<span class="page-link">...</span>`;
-            pagination.appendChild(dotsLi);
-        }
-    }
-    
-    for (let i = startPage; i <= endPage; i++) {
-        const li = document.createElement('li');
-        li.className = `page-item ${i === problematicCurrentPage ? 'active' : ''}`;
-        li.innerHTML = `<a class="page-link" href="#" onclick="goToProblematicPage(${i}); return false;">${i}</a>`;
-        pagination.appendChild(li);
-    }
-    
-    if (endPage < totalPages) {
-        if (endPage < totalPages - 1) {
-            const dotsLi = document.createElement('li');
-            dotsLi.className = 'page-item disabled';
-            dotsLi.innerHTML = `<span class="page-link">...</span>`;
-            pagination.appendChild(dotsLi);
-        }
-        
-        const lastLi = document.createElement('li');
-        lastLi.className = 'page-item';
-        lastLi.innerHTML = `<a class="page-link" href="#" onclick="goToProblematicPage(${totalPages}); return false;">${totalPages}</a>`;
-        pagination.appendChild(lastLi);
-    }
-    
-    const nextLi = document.createElement('li');
-    nextLi.className = `page-item ${problematicCurrentPage === totalPages ? 'disabled' : ''}`;
-    nextLi.innerHTML = `<a class="page-link" href="#" onclick="goToProblematicPage(${problematicCurrentPage + 1}); return false;">
-        <span class="d-none d-sm-inline">Siguiente</span> <i class="ti ti-chevron-right"></i>
-    </a>`;
-    pagination.appendChild(nextLi);
+    window.codexrouteRenderGlpiPager(
+        'codexroute-problematic-routes-pagination',
+        problematicCurrentPage,
+        totalPages,
+        limit,
+        'goToProblematicPage'
+    );
 }
 
 function goToProblematicPage(page) {
-    const totalPages = Math.ceil(problematicAllVisibleRows.length / problematicItemsPerPage);
-    if (page < 1 || page > totalPages) return;
+    const limit = window.codexrouteGetPageSizeForTable('problematic-routes-table');
+    const totalPages = Math.max(1, Math.ceil(problematicAllVisibleRows.length / limit));
+    if (page < 1 || page > totalPages) {
+        return;
+    }
     problematicCurrentPage = page;
     displayProblematicPage();
     updateProblematicPagination();
 }
 
-// Funciones para Rutas Permitidas
 let allowedAllRows = [];
 let allowedCurrentPage = 1;
-const allowedItemsPerPage = 20;
 let allowedAllVisibleRows = [];
 
 function filterAllowedRoutes() {
     const searchTerm = document.getElementById('allowed-search')?.value.toLowerCase() || '';
-    
+
     if (allowedAllRows.length === 0) {
         allowedAllRows = Array.from(document.querySelectorAll('#allowed-routes-table tbody .allowed-route-row'));
     }
-    
-    allowedAllRows.forEach(row => {
+
+    allowedAllRows.forEach((row) => {
         row.style.display = 'none';
     });
-    
+
     allowedAllVisibleRows = [];
-    
+
     allowedAllRows.forEach((row) => {
         const file = (row.dataset.file || '').toLowerCase();
-        
         const matchesSearch = searchTerm === '' || file.includes(searchTerm);
-        
         if (matchesSearch) {
             allowedAllVisibleRows.push(row);
         }
     });
-    
+
     allowedCurrentPage = 1;
     updateAllowedPagination();
     displayAllowedPage();
 }
 
 function displayAllowedPage() {
-    const start = (allowedCurrentPage - 1) * allowedItemsPerPage;
-    const end = start + allowedItemsPerPage;
-    
+    const limit = window.codexrouteGetPageSizeForTable('allowed-routes-table');
+    const start = (allowedCurrentPage - 1) * limit;
+    const end = start + limit;
+    const total = allowedAllVisibleRows.length;
+
     allowedAllVisibleRows.forEach((row, index) => {
-        if (index >= start && index < end) {
-            row.style.display = '';
-        } else {
-            row.style.display = 'none';
-        }
+        row.style.display = (index >= start && index < end) ? '' : 'none';
     });
-    
-    const pageStart = allowedAllVisibleRows.length > 0 ? start + 1 : 0;
-    const pageEnd = Math.min(end, allowedAllVisibleRows.length);
-    
-    const countEl = document.getElementById('allowed-count');
-    const startEl = document.getElementById('allowed-page-start');
-    const endEl = document.getElementById('allowed-page-end');
-    const totalEl = document.getElementById('allowed-total-filtered');
-    const infoEl = document.getElementById('allowed-pagination-info');
-    
-    if (countEl) countEl.textContent = allowedAllVisibleRows.length;
-    if (startEl) startEl.textContent = pageStart;
-    if (endEl) endEl.textContent = pageEnd;
-    if (totalEl) totalEl.textContent = allowedAllVisibleRows.length;
-    
-    if (infoEl) {
-        if (allowedAllVisibleRows.length > allowedItemsPerPage) {
-            infoEl.style.display = 'block';
-        } else {
-            infoEl.style.display = 'none';
-        }
+
+    if (total === 0) {
+        window.codexrouteFillPageInfos('codexroute-allowed', 0, 0, 0);
+    } else {
+        const pageStart = start + 1;
+        const pageEnd = Math.min(end, total);
+        window.codexrouteFillPageInfos('codexroute-allowed', pageStart, pageEnd, total);
     }
 }
 
 function updateAllowedPagination() {
-    const totalPages = Math.ceil(allowedAllVisibleRows.length / allowedItemsPerPage);
-    const pagination = document.getElementById('allowed-routes-pagination');
-    if (!pagination) return;
-    
-    pagination.innerHTML = '';
-    
-    if (totalPages <= 1) {
-        return;
+    const limit = window.codexrouteGetPageSizeForTable('allowed-routes-table');
+    const total = allowedAllVisibleRows.length;
+    const totalPages = Math.max(1, Math.ceil(total / limit));
+    if (allowedCurrentPage > totalPages) {
+        allowedCurrentPage = totalPages;
     }
-    
-    const prevLi = document.createElement('li');
-    prevLi.className = `page-item ${allowedCurrentPage === 1 ? 'disabled' : ''}`;
-    prevLi.innerHTML = `<a class="page-link" href="#" onclick="goToAllowedPage(${allowedCurrentPage - 1}); return false;">
-        <i class="ti ti-chevron-left"></i> <span class="d-none d-sm-inline">Anterior</span>
-    </a>`;
-    pagination.appendChild(prevLi);
-    
-    const maxVisible = 5;
-    let startPage = Math.max(1, allowedCurrentPage - Math.floor(maxVisible / 2));
-    let endPage = Math.min(totalPages, startPage + maxVisible - 1);
-    
-    if (endPage - startPage < maxVisible - 1) {
-        startPage = Math.max(1, endPage - maxVisible + 1);
-    }
-    
-    if (startPage > 1) {
-        const firstLi = document.createElement('li');
-        firstLi.className = 'page-item';
-        firstLi.innerHTML = `<a class="page-link" href="#" onclick="goToAllowedPage(1); return false;">1</a>`;
-        pagination.appendChild(firstLi);
-        
-        if (startPage > 2) {
-            const dotsLi = document.createElement('li');
-            dotsLi.className = 'page-item disabled';
-            dotsLi.innerHTML = `<span class="page-link">...</span>`;
-            pagination.appendChild(dotsLi);
-        }
-    }
-    
-    for (let i = startPage; i <= endPage; i++) {
-        const li = document.createElement('li');
-        li.className = `page-item ${i === allowedCurrentPage ? 'active' : ''}`;
-        li.innerHTML = `<a class="page-link" href="#" onclick="goToAllowedPage(${i}); return false;">${i}</a>`;
-        pagination.appendChild(li);
-    }
-    
-    if (endPage < totalPages) {
-        if (endPage < totalPages - 1) {
-            const dotsLi = document.createElement('li');
-            dotsLi.className = 'page-item disabled';
-            dotsLi.innerHTML = `<span class="page-link">...</span>`;
-            pagination.appendChild(dotsLi);
-        }
-        
-        const lastLi = document.createElement('li');
-        lastLi.className = 'page-item';
-        lastLi.innerHTML = `<a class="page-link" href="#" onclick="goToAllowedPage(${totalPages}); return false;">${totalPages}</a>`;
-        pagination.appendChild(lastLi);
-    }
-    
-    const nextLi = document.createElement('li');
-    nextLi.className = `page-item ${allowedCurrentPage === totalPages ? 'disabled' : ''}`;
-    nextLi.innerHTML = `<a class="page-link" href="#" onclick="goToAllowedPage(${allowedCurrentPage + 1}); return false;">
-        <span class="d-none d-sm-inline">Siguiente</span> <i class="ti ti-chevron-right"></i>
-    </a>`;
-    pagination.appendChild(nextLi);
+    window.codexrouteRenderGlpiPager(
+        'codexroute-allowed-routes-pagination',
+        allowedCurrentPage,
+        totalPages,
+        limit,
+        'goToAllowedPage'
+    );
 }
 
 function goToAllowedPage(page) {
-    const totalPages = Math.ceil(allowedAllVisibleRows.length / allowedItemsPerPage);
-    if (page < 1 || page > totalPages) return;
+    const limit = window.codexrouteGetPageSizeForTable('allowed-routes-table');
+    const totalPages = Math.max(1, Math.ceil(allowedAllVisibleRows.length / limit));
+    if (page < 1 || page > totalPages) {
+        return;
+    }
     allowedCurrentPage = page;
     displayAllowedPage();
     updateAllowedPagination();
 }
 
-// Inicialización
+function onCodexrouteRoutesLimitChange(ev) {
+    if (!ev.target.classList.contains('search-limit-dropdown')) {
+        return;
+    }
+    const card = ev.target.closest('.search-card');
+    const table = card ? card.querySelector('table.search-results') : null;
+    if (!table) {
+        return;
+    }
+    const limit = parseInt(ev.target.value, 10) || 20;
+    if (table.id === 'problematic-routes-table') {
+        const totalPages = Math.max(1, Math.ceil(problematicAllVisibleRows.length / limit));
+        if (problematicCurrentPage > totalPages) {
+            problematicCurrentPage = totalPages;
+        }
+        updateProblematicPagination();
+        displayProblematicPage();
+    } else if (table.id === 'allowed-routes-table') {
+        const totalPages = Math.max(1, Math.ceil(allowedAllVisibleRows.length / limit));
+        if (allowedCurrentPage > totalPages) {
+            allowedCurrentPage = totalPages;
+        }
+        updateAllowedPagination();
+        displayAllowedPage();
+    }
+}
+
 document.addEventListener('DOMContentLoaded', function() {
+    document.getElementById('routes-tab')?.addEventListener('change', onCodexrouteRoutesLimitChange);
+
     if (document.getElementById('problematic-routes-table')) {
         problematicAllRows = Array.from(document.querySelectorAll('#problematic-routes-table tbody .problematic-route-row'));
         filterProblematicRoutes();
     }
-    
+
     if (document.getElementById('allowed-routes-table')) {
         allowedAllRows = Array.from(document.querySelectorAll('#allowed-routes-table tbody .allowed-route-row'));
         filterAllowedRoutes();

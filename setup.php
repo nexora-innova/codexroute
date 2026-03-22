@@ -7,6 +7,7 @@
  * @license   GPLv3 https://www.gnu.org/licenses/gpl-3.0.html
  */
 
+use Glpi\Plugin\Hooks;
 use GlpiPlugin\Codexroute\Config;
 use GlpiPlugin\Codexroute\GlobalValidator;
 use GlpiPlugin\Codexroute\LinkEncryptor;
@@ -20,24 +21,24 @@ function plugin_init_codexroute() {
 
     // Declarar compatibilidad con CSRF SIEMPRE, incluso si el plugin no está instalado/activado
     // Esto es necesario para que GLPI permita instalar/activar el plugin
-    $PLUGIN_HOOKS['csrf_compliant']['codexroute'] = true;
+    $PLUGIN_HOOKS[Hooks::CSRF_COMPLIANT]['codexroute'] = true;
 
     $plugin = new Plugin();
     
     // Solo registrar hooks si el plugin está instalado Y activado
     if (!$plugin->isInstalled('codexroute') || !$plugin->isActivated('codexroute')) {
         // Asegurar que no haya hooks residuales si el plugin no está activo
-        if (isset($PLUGIN_HOOKS['menu_toadd']['codexroute'])) {
-            unset($PLUGIN_HOOKS['menu_toadd']['codexroute']);
+        if (isset($PLUGIN_HOOKS[Hooks::MENU_TOADD]['codexroute'])) {
+            unset($PLUGIN_HOOKS[Hooks::MENU_TOADD]['codexroute']);
         }
-        if (isset($PLUGIN_HOOKS['config_page']['codexroute'])) {
-            unset($PLUGIN_HOOKS['config_page']['codexroute']);
+        if (isset($PLUGIN_HOOKS[Hooks::CONFIG_PAGE]['codexroute'])) {
+            unset($PLUGIN_HOOKS[Hooks::CONFIG_PAGE]['codexroute']);
         }
-        if (isset($PLUGIN_HOOKS['add_css']['codexroute'])) {
-            unset($PLUGIN_HOOKS['add_css']['codexroute']);
+        if (isset($PLUGIN_HOOKS[Hooks::ADD_CSS]['codexroute'])) {
+            unset($PLUGIN_HOOKS[Hooks::ADD_CSS]['codexroute']);
         }
-        if (isset($PLUGIN_HOOKS['add_javascript']['codexroute'])) {
-            unset($PLUGIN_HOOKS['add_javascript']['codexroute']);
+        if (isset($PLUGIN_HOOKS[Hooks::ADD_JAVASCRIPT]['codexroute'])) {
+            unset($PLUGIN_HOOKS[Hooks::ADD_JAVASCRIPT]['codexroute']);
         }
         return;
     }
@@ -76,31 +77,35 @@ function plugin_init_codexroute() {
     }
 
     if (Session::haveRight('config', UPDATE)) {
-        $PLUGIN_HOOKS['menu_toadd']['codexroute'] = [
+        $PLUGIN_HOOKS[Hooks::MENU_TOADD]['codexroute'] = [
             'config' => 'GlpiPlugin\Codexroute\Menu'
         ];
         
-        $PLUGIN_HOOKS['config_page']['codexroute'] = 'front/config.form.php';
+        $PLUGIN_HOOKS[Hooks::CONFIG_PAGE]['codexroute'] = 'front/config.form.php';
     }
 
-    $PLUGIN_HOOKS['add_css']['codexroute'] = 'css/codexroute.css';
-    $PLUGIN_HOOKS['add_javascript']['codexroute'] = 'js/codexroute.js';
+    $script = $_SERVER['SCRIPT_NAME'] ?? '';
+    if (str_contains($script, '/plugins/codexroute/front/config.form.php')) {
+        $PLUGIN_HOOKS[Hooks::ADD_CSS]['codexroute'] = 'css/codexroute.css';
+    }
+
+    $PLUGIN_HOOKS[Hooks::ADD_JAVASCRIPT]['codexroute'] = 'js/codexroute.js';
 }
 
 function plugin_version_codexroute() {
     return [
         'name'           => 'CodexRoute',
         'version'        => PLUGIN_CODEXROUTE_VERSION,
-        'author'         => '<a href="#">Security Team</a>',
+        'author'         => '<a href="https://github.com/nexora-innova" target="_blank" rel="noopener noreferrer">NexoraInnova</a>',
         'license'        => 'GPLv3',
-        'homepage'       => '',
+        'homepage'       => 'https://github.com/nexora-innova/codexroute',
         'requirements'   => [
             'glpi' => [
                 'min' => PLUGIN_CODEXROUTE_MIN_GLPI_VERSION,
                 'max' => PLUGIN_CODEXROUTE_MAX_GLPI_VERSION,
             ],
             'php'  => [
-                'min' => '7.4',
+                'min' => '8.1',
             ]
         ]
     ];
@@ -108,11 +113,15 @@ function plugin_version_codexroute() {
 
 function plugin_codexroute_check_prerequisites() {
     if (version_compare(GLPI_VERSION, PLUGIN_CODEXROUTE_MIN_GLPI_VERSION, 'lt')) {
-        echo "Este plugin requiere GLPI >= " . PLUGIN_CODEXROUTE_MIN_GLPI_VERSION;
+        if (class_exists('Toolbox') && method_exists('Toolbox', 'logError')) {
+            Toolbox::logError('CodexRoute requires GLPI >= ' . PLUGIN_CODEXROUTE_MIN_GLPI_VERSION);
+        }
         return false;
     }
     if (version_compare(GLPI_VERSION, PLUGIN_CODEXROUTE_MAX_GLPI_VERSION, 'ge')) {
-        echo "Este plugin requiere GLPI < " . PLUGIN_CODEXROUTE_MAX_GLPI_VERSION;
+        if (class_exists('Toolbox') && method_exists('Toolbox', 'logError')) {
+            Toolbox::logError('CodexRoute requires GLPI < ' . PLUGIN_CODEXROUTE_MAX_GLPI_VERSION);
+        }
         return false;
     }
     return true;

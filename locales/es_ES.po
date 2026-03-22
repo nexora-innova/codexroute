@@ -216,3 +216,123 @@ msgstr "Procesando..."
 msgid "Información:"
 msgstr "Información:"
 
+msgid "Access denied: numeric IDs are not allowed."
+msgstr "Acceso denegado: no se permiten IDs numéricos."
+
+msgid "Access denied: invalid ID."
+msgstr "Acceso denegado: ID no válido."
+
+msgid "Access denied."
+msgstr "Acceso denegado."
+
+msgid "No active session. Please log in."
+msgstr "No hay sesión activa. Inicie sesión."
+
+msgid "Access denied. Configuration permissions are required."
+msgstr "Acceso denegado. Se requieren permisos de configuración."
+
+msgid "No action was specified."
+msgstr "No se indicó ninguna acción."
+
+msgid "Security error: CSRF token was not provided."
+msgstr "Error de seguridad: no se envió el token CSRF."
+
+msgid "Security error: invalid or expired CSRF token. Please reload the page."
+msgstr "Error de seguridad: token CSRF inválido o caducado. Recargue la página."
+
+msgid "Invalid action."
+msgstr "Acción no válida."
+
+msgid "File not specified."
+msgstr "No se especificó el archivo."
+
+msgid "Route \"%s\" has been allowed."
+msgstr "La ruta \"%s\" ha sido permitida."
+
+msgid "Could not allow route \"%s\"."
+msgstr "No se pudo permitir la ruta \"%s\"."
+
+msgid "Route \"%s\" has been blocked."
+msgstr "La ruta \"%s\" ha sido bloqueada."
+
+msgid "Could not block route \"%s\"."
+msgstr "No se pudo bloquear la ruta \"%s\"."
+
+msgid "Configuration saved and configuration file updated successfully."
+msgstr "Configuración guardada y archivo de configuración actualizado correctamente."
+
+msgid "Configuration saved in the database. Could not update the configuration file on disk."
+msgstr "Configuración guardada en la base de datos. No se pudo actualizar el archivo de configuración en disco."
+
+msgid "Configuration saved successfully. Generate the configuration file when you are ready."
+msgstr "Configuración guardada correctamente. Genere el archivo de configuración cuando esté listo."
+
+msgid "Configuration file generated successfully."
+msgstr "Archivo de configuración generado correctamente."
+
+msgid "Unknown action: %s"
+msgstr "Acción desconocida: %s"
+
+msgid "Plugin is not installed or activated."
+msgstr "El plugin no está instalado o activado."
+
+msgid "Missing ID parameter."
+msgstr "Falta el parámetro ID."
+
+msgid "Invalid ID format."
+msgstr "Formato de ID no válido."
+
+msgid "ID must be greater than zero."
+msgstr "El ID debe ser mayor que cero."
+
+msgid "IDEncryption class is not available."
+msgstr "La clase IDEncryption no está disponible."
+
+msgid "Encryption error: %s"
+msgstr "Error al encriptar: %s"
+
+msgid "Reorder tabs"
+msgstr "Reordenar pestañas"
+
+msgid "Completed"
+msgstr "Completado"
+
+msgid "Move up"
+msgstr "Mover arriba"
+
+msgid "Move down"
+msgstr "Mover abajo"
+
+msgid "Save order"
+msgstr "Guardar orden"
+
+msgid "Processing..."
+msgstr "Procesando..."
+
+msgid "Cancel"
+msgstr "Cancelar"
+
+msgid "Restore"
+msgstr "Restaurar"
+
+msgid "Loading..."
+msgstr "Cargando..."
+
+msgid "Security and performance settings"
+msgstr "Ajustes de seguridad y rendimiento"
+
+msgid "Options"
+msgstr "Opciones"
+
+msgid "Section"
+msgstr "Sección"
+
+msgid "Drag is not required: use the arrows to change order, then save."
+msgstr "No hace falta arrastrar: use las flechas para cambiar el orden y luego guarde."
+
+msgid "Extensión"
+msgstr "Extensión"
+
+msgid "Filtrar por estado"
+msgstr "Filtrar por estado"
+

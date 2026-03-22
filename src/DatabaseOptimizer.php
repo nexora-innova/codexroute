@@ -2,6 +2,8 @@
 
 namespace GlpiPlugin\Codexroute;
 
+use InvalidArgumentException;
+
 class DatabaseOptimizer {
     
     private static $transactional_tables = [
@@ -164,10 +166,41 @@ class DatabaseOptimizer {
         ];
     }
     
+    /**
+     * Comprueba que el par itemtype/tabla coincida con la lista blanca del optimizador y devuelve el nombre de tabla SQL seguro.
+     */
+    public static function assertValidOptimizableTableRequest(string $item_key, string $table_db): string {
+        if (!isset(self::$optimizable_tables[$item_key])) {
+            throw new InvalidArgumentException(__('Tipo de entidad no permitido para optimización.', 'codexroute'));
+        }
+        $expected = self::$optimizable_tables[$item_key]['table'];
+        if ($table_db !== $expected || !preg_match('/^[a-z][a-z0-9_]*$/i', $table_db)) {
+            throw new InvalidArgumentException(__('Identificador de tabla no válido.', 'codexroute'));
+        }
+        return $table_db;
+    }
+
+    /**
+     * Entrecomilla un identificador de tabla MySQL tras validación estricta.
+     */
+    private static function quoteMysqlIdentifier(string $name): string {
+        return '`' . str_replace('`', '``', $name) . '`';
+    }
+
     public static function optimizeTableIndexes(string $table_name, string $table_db): array {
         global $DB;
         
         $DB->connect();
+
+        $table_db = self::assertValidOptimizableTableRequest($table_name, $table_db);
+
+        if (!$DB->tableExists($table_db)) {
+            return [
+                'created' => [],
+                'skipped' => [],
+                'errors'  => [sprintf('La tabla %s no existe.', $table_db)],
+            ];
+        }
         
         $results = [
             'created' => [],
@@ -217,8 +250,9 @@ class DatabaseOptimizer {
         }
         
         $existing_indexes = [];
+        $quoted_table = self::quoteMysqlIdentifier($table_db);
         try {
-            $idx_result = $DB->doQuery("SHOW INDEX FROM $table_db");
+            $idx_result = $DB->doQuery('SHOW INDEX FROM ' . $quoted_table);
             while ($row = $DB->fetchAssoc($idx_result)) {
                 $existing_indexes[] = $row['Key_name'];
             }
@@ -234,7 +268,9 @@ class DatabaseOptimizer {
             }
             
             try {
-                $sql = "ALTER TABLE `$table_db` ADD INDEX `$idx_name` (`$column`)";
+                $qi = self::quoteMysqlIdentifier($idx_name);
+                $qc = self::quoteMysqlIdentifier($column);
+                $sql = 'ALTER TABLE ' . $quoted_table . ' ADD INDEX ' . $qi . ' (' . $qc . ')';
                 $DB->doQuery($sql);
                 $results['created'][] = $idx_name;
             } catch (\Exception $e) {

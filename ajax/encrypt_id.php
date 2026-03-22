@@ -5,11 +5,14 @@ if (!defined('GLPI_KEEP_CSRF_TOKEN')) {
     define('GLPI_KEEP_CSRF_TOKEN', true);
 }
 
+if (!defined('GLPI_ROOT')) {
+    define('GLPI_ROOT', dirname(__DIR__, 3));
+}
+
 header('Content-Type: application/json; charset=utf-8');
 header('Cache-Control: no-cache, must-revalidate');
 
-define('GLPI_ROOT', '../../..');
-include(GLPI_ROOT . '/inc/includes.php');
+include GLPI_ROOT . '/inc/includes.php';
 
 while (ob_get_level()) {
     ob_end_clean();
@@ -20,13 +23,28 @@ Session::checkLoginUser();
 $plugin = new Plugin();
 if (!$plugin->isInstalled('codexroute') || !$plugin->isActivated('codexroute')) {
     http_response_code(500);
-    echo json_encode(['success' => false, 'message' => 'Plugin no está activado']);
+    echo json_encode(['success' => false, 'message' => __('Plugin is not installed or activated.', 'codexroute')]);
+    exit;
+}
+
+$_config_dir = GLPI_CONFIG_DIR ?? (GLPI_ROOT . '/config');
+$_config_file = $_config_dir . '/codexroute/encryption_config.php';
+if (file_exists($_config_file)) {
+    include_once($_config_file);
+}
+
+if (!defined('CODEXROUTE_ENCRYPTION_ENABLED') || !CODEXROUTE_ENCRYPTION_ENABLED) {
+    echo json_encode([
+        'success'            => false,
+        'encryption_enabled' => false,
+        'message'            => __('Encryption is disabled in the plugin configuration.', 'codexroute'),
+    ], JSON_UNESCAPED_UNICODE);
     exit;
 }
 
 if (!isset($_POST['id']) || $_POST['id'] === '') {
     http_response_code(400);
-    echo json_encode(['success' => false, 'message' => 'ID faltante']);
+    echo json_encode(['success' => false, 'message' => __('Missing ID parameter.', 'codexroute')]);
     exit;
 }
 
@@ -34,18 +52,12 @@ $id = $_POST['id'];
 $id_str = (string)$id;
 $id_length = strlen($id_str);
 
-// VALIDACIÓN 1: Rechazar IDs demasiado largos (probablemente ya encriptados)
 if ($id_length > 100) {
-    error_log(sprintf(
-        '[CodexRoute] encrypt_id.php: Rejecting too long ID (%d chars)',
-        $id_length
-    ));
     echo json_encode([
-        'success' => true,
-        'encrypted_id' => $id_str,
-        'original_id' => $id_str,
-        'already_encrypted' => true,
-        'warning' => 'ID too long, assuming encrypted'
+        'success'          => true,
+        'encrypted_id'     => $id_str,
+        'original_id'      => $id_str,
+        'already_encrypted'=> true,
     ], JSON_UNESCAPED_UNICODE);
     exit;
 }
@@ -53,68 +65,60 @@ if ($id_length > 100) {
 if (!is_numeric($id)) {
     if ($id_length > 50 && preg_match('/^[A-Za-z0-9_-]+$/', $id_str)) {
         echo json_encode([
-            'success' => true,
-            'encrypted_id' => $id_str,
-            'original_id' => $id_str,
-            'already_encrypted' => true
+            'success'          => true,
+            'encrypted_id'     => $id_str,
+            'original_id'      => $id_str,
+            'already_encrypted'=> true,
         ], JSON_UNESCAPED_UNICODE);
         exit;
     }
     if ($id_length >= 16 && $id_length <= 100 && preg_match('/^[A-Za-z0-9_-]+$/', $id_str)) {
         echo json_encode([
-            'success' => true,
-            'encrypted_id' => $id_str,
-            'original_id' => $id_str,
-            'already_encrypted' => true
+            'success'          => true,
+            'encrypted_id'     => $id_str,
+            'original_id'      => $id_str,
+            'already_encrypted'=> true,
         ], JSON_UNESCAPED_UNICODE);
         exit;
     }
     http_response_code(400);
-    echo json_encode(['success' => false, 'message' => 'ID con formato inválido']);
+    echo json_encode(['success' => false, 'message' => __('Invalid ID format.', 'codexroute')]);
     exit;
 }
 
-// VALIDACIÓN 3: ID numérico válido
 $id = (int)$id;
 if ($id <= 0) {
     http_response_code(400);
-    echo json_encode(['success' => false, 'message' => 'ID debe ser mayor a 0']);
+    echo json_encode(['success' => false, 'message' => __('ID must be greater than zero.', 'codexroute')]);
     exit;
 }
 
-// Proceder a encriptar
 if (!class_exists('GlpiPlugin\Codexroute\IDEncryption')) {
     http_response_code(500);
-    echo json_encode(['success' => false, 'message' => 'Clase IDEncryption no disponible']);
+    echo json_encode(['success' => false, 'message' => __('IDEncryption class is not available.', 'codexroute')]);
     exit;
 }
 
 try {
     $encrypted_id = \GlpiPlugin\Codexroute\IDEncryption::encrypt($id);
-    
-    // VALIDACIÓN 4: Verificar que el resultado sea válido
+
     if (empty($encrypted_id)) {
-        throw new Exception('Resultado de encriptación vacío');
+        throw new Exception('Encryption result is empty');
     }
-    
     if (strlen($encrypted_id) > 100) {
-        throw new Exception('Resultado de encriptación demasiado largo: ' . strlen($encrypted_id) . ' chars');
+        throw new Exception('Encrypted ID is too long: ' . strlen($encrypted_id) . ' chars');
     }
-    
-    // Si el resultado es igual al input, algo salió mal
     if ($encrypted_id === (string)$id) {
-        throw new Exception('La encriptación no modificó el ID');
+        throw new Exception('Encryption did not modify the ID');
     }
-    
-    $response = json_encode([
-        'success' => true,
+
+    echo json_encode([
+        'success'      => true,
         'encrypted_id' => $encrypted_id,
-        'original_id' => $id
+        'original_id'  => $id,
     ], JSON_UNESCAPED_UNICODE);
-    
-    echo $response;
     exit;
-    
+
 } catch (Exception $e) {
     error_log(sprintf(
         '[CodexRoute] encrypt_id.php ERROR: %s (ID: %s, User: %s)',
@@ -122,13 +126,10 @@ try {
         substr((string)$id, 0, 50),
         Session::getLoginUserID() ?? 'unknown'
     ));
-    
     http_response_code(500);
-    $error_response = json_encode([
+    echo json_encode([
         'success' => false,
-        'message' => 'Error al encriptar: ' . $e->getMessage()
+        'message' => sprintf(__('Encryption error: %s', 'codexroute'), $e->getMessage()),
     ], JSON_UNESCAPED_UNICODE);
-    
-    echo $error_response;
     exit;
 }

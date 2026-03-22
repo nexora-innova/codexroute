@@ -3,20 +3,53 @@
  * Usa componentes estándar de GLPI y variables CSS para compatibilidad con temas
  */
 
-/* Estilos para tabs ordenados con indicadores de paso */
-.list-group-item .badge {
-    font-size: 0.75rem;
-    font-weight: 600;
+.codexroute-admin-panel .card-tabs.vertical .nav-tabs .nav-link {
+    display: flex;
+    align-items: center;
 }
 
-.list-group-item.active .badge {
-    background-color: rgba(255, 255, 255, 0.3) !important;
-    color: white;
+.codexroute-admin-panel .card-tabs.vertical .tab-content.card {
+    border-top-left-radius: 0;
 }
 
-.codexroute-sidebar-logo {
-    object-fit: contain;
-    flex-shrink: 0;
+.codexroute-admin-panel .card-tabs.vertical #tabspanel .nav-item {
+    width: 100%;
+    margin-inline-start: 0;
+}
+
+.codexroute-admin-panel .card-tabs.vertical .tab-content.card {
+    min-width: 0;
+    overflow-x: auto;
+}
+
+.codexroute-tab-pane {
+    min-width: 0;
+}
+
+.codexroute-admin-panel .codexroute-embedded-search.search_page {
+    display: block;
+}
+
+@media (min-width: 992px) {
+    .codexroute-admin-panel .codexroute-embedded-search.search_page .search-container.disable-overflow-y {
+        height: auto;
+        max-height: none;
+        overflow-x: auto;
+        overflow-y: visible;
+        margin-left: 0;
+        width: 100%;
+    }
+
+    .codexroute-admin-panel .codexroute-embedded-search.search_page .search-container .search-card {
+        width: 100%;
+        min-width: 0;
+    }
+
+    .codexroute-admin-panel .codexroute-embedded-search .search-results thead:first-child th {
+        position: static;
+        z-index: auto;
+        top: auto;
+    }
 }
 
 /* Estilos para panel de reordenamiento */
@@ -37,78 +70,20 @@
     opacity: 1;
 }
 
-/* Loader personalizado - mantiene funcionalidad específica */
-.codexroute-loader {
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    background: rgba(0, 0, 0, 0.5);
-    z-index: 9999;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-}
-
-.codexroute-loader-content {
-    background: var(--glpi-color-bg, #fff);
-    border-radius: 12px;
-    padding: 40px;
-    text-align: center;
-    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
-}
-
-.codexroute-spinner {
-    border: 4px solid var(--glpi-color-border, #f3f3f3);
-    border-top: 4px solid var(--glpi-color-primary, #007bff);
-    border-radius: 50%;
-    width: 50px;
-    height: 50px;
-    animation: codexroute-spin 1s linear infinite;
-    margin: 0 auto 20px;
-}
-
-@keyframes codexroute-spin {
-    0% { transform: rotate(0deg); }
-    100% { transform: rotate(360deg); }
-}
-
-.codexroute-loader-content p {
-    margin: 0;
-    color: var(--glpi-color-text, #333);
-    font-size: 1rem;
-    font-weight: 500;
-}
-
-/* Mejoras para componentes estándar de GLPI */
-.codexroute-admin-panel .card {
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.08);
-    transition: box-shadow 0.2s;
-}
-
-.codexroute-admin-panel .card:hover {
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.12);
-}
-
-/* Responsive para sidebar vertical */
-@media (max-width: 991px) {
-    .codexroute-admin-panel .col-md-3 {
-        margin-bottom: 20px;
-    }
-    
-    .codexroute-admin-panel .card.sticky-top {
-        position: relative !important;
-        top: 0 !important;
-    }
-}
-
-/* Mejoras para tablas */
-.codexroute-admin-panel .table code {
+/* Código en tablas: no aplicar “chip” en listados tipo búsqueda GLPI (search-results) */
+.codexroute-admin-panel .table:not(.search-results) code {
     background: var(--glpi-color-bg-secondary, #e9ecef);
     padding: 2px 6px;
     border-radius: 3px;
     font-size: 0.875rem;
+}
+
+.codexroute-admin-panel table.search-results code {
+    background: transparent;
+    padding: 0;
+    border-radius: 0;
+    font-size: inherit;
+    color: inherit;
 }
 
 /* Mejoras para cards de estadísticas */
@@ -118,14 +93,13 @@
     justify-content: center;
 }
 
-/* Prevenir desbordamiento en cards de estadísticas */
-.card-body {
+.codexroute-admin-panel .card-body {
     overflow: visible;
     word-wrap: break-word;
 }
 
-.card-body .h2,
-.card-body .h3 {
+.codexroute-admin-panel .card-body .h2,
+.codexroute-admin-panel .card-body .h3 {
     overflow-wrap: break-word;
     word-break: break-word;
     hyphens: auto;
@@ -142,72 +116,60 @@
     white-space: nowrap;
 }
 
-/* Mejoras para visibilidad de textos en cards de métricas */
-.card-body .text-muted {
+.codexroute-admin-panel .card-body .text-muted {
     color: var(--glpi-color-text-muted, #6c757d) !important;
     opacity: 1;
 }
 
-.card-body .text-dark {
+.codexroute-admin-panel .card-body .text-dark {
     color: var(--glpi-color-text, #212529) !important;
 }
 
-/* Asegurar que los textos descriptivos sean visibles */
-.card-body > div:last-child {
+.codexroute-admin-panel .card-body > div:last-child {
     margin-top: auto;
     padding-top: 0.5rem;
 }
 
-/* Mejoras específicas para cards de métricas */
-.card-body p-3 {
-    overflow: hidden;
-}
-
-.card-body .flex-grow-1 {
+.codexroute-admin-panel .card-body .flex-grow-1 {
     min-width: 0;
     overflow: hidden;
 }
 
-/* Ajustes para números grandes */
-.card-body .h2 {
+.codexroute-admin-panel .card-body .h2 {
     font-size: clamp(1.5rem, 4vw, 2rem);
     line-height: 1.2;
 }
 
 /* Mejorar responsive de las cards */
 @media (max-width: 576px) {
-    .card-body {
+    .codexroute-admin-panel .card-body {
         padding: 1rem !important;
     }
     
-    .card-body .h2 {
+    .codexroute-admin-panel .card-body .h2 {
         font-size: 1.5rem;
     }
     
-    .card-body .text-muted {
+    .codexroute-admin-panel .card-body .text-muted {
         font-size: 0.75rem;
     }
 }
 
-/* Prevenir desbordamiento en barras de progreso y eliminar fondo gris */
-.progress {
+.codexroute-admin-panel .progress {
     overflow: hidden;
     position: relative;
 }
 
-/* Forzar fondo transparente en barras de progreso del plugin - selector muy específico */
-.card-body .progress,
-.card .progress,
-div.progress,
-.progress[style*="background"] {
+.codexroute-admin-panel .card-body .progress,
+.codexroute-admin-panel .card .progress,
+.codexroute-admin-panel div.progress {
     background-color: transparent !important;
     background: transparent !important;
     background-image: none !important;
 }
 
-/* Eliminar cualquier fondo gris de Bootstrap/GLPI */
-.progress-bar-container .progress,
-.tab-pane .progress {
+.codexroute-admin-panel .progress-bar-container .progress,
+.codexroute-admin-panel .codexroute-plugin-pane .progress {
     background-color: transparent !important;
     background: transparent !important;
     background-image: none !important;
@@ -239,14 +201,14 @@ div.progress,
     content: none !important;
 }
 
-.progress-bar {
+.codexroute-admin-panel .progress-bar {
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
     min-width: 0;
 }
 
-.progress-bar span {
+.codexroute-admin-panel .progress-bar span {
     display: inline-block;
     max-width: 100%;
     overflow: hidden;
@@ -254,73 +216,25 @@ div.progress,
     white-space: nowrap;
 }
 
-/* Asegurar que los números en las barras no desborden */
-.progress-bar .text-truncate {
+.codexroute-admin-panel .progress-bar .text-truncate {
     display: inline-flex;
     align-items: center;
     max-width: 100%;
 }
 
-/* Mejoras para tabla de rutas */
-#routes-table .route-row:hover {
+.codexroute-plugin-pane #problematic-routes-table tbody tr:hover,
+.codexroute-plugin-pane #allowed-routes-table tbody tr:hover {
     background-color: var(--glpi-color-bg-secondary, #f8f9fa);
 }
 
-#routes-table code {
-    font-size: 0.875rem;
-    padding: 2px 6px;
-    background-color: var(--glpi-color-bg-secondary, #e9ecef);
-    border-radius: 4px;
+.codexroute-embedded-search .search-footer .search-pager .page-infos {
+    writing-mode: horizontal-tb !important;
+    text-orientation: mixed !important;
+    white-space: normal !important;
+    max-width: 100%;
 }
 
-/* Mejoras para badges - asegurar texto blanco visible */
-#routes-table .badge {
-    color: #ffffff !important;
-    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
-    border: none;
-    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.15);
-}
-
-#routes-table .badge.text-white {
-    color: #ffffff !important;
-}
-
-/* Asegurar que los íconos dentro de badges también sean blancos */
-#routes-table .badge.text-white i {
-    color: #ffffff !important;
-}
-
-/* Colores específicos para badges de métodos */
-#routes-table .badge[style*="background-color: #0d6efd"] {
-    background-color: #0d6efd !important;
-    color: #ffffff !important;
-}
-
-#routes-table .badge[style*="background-color: #fd7e14"] {
-    background-color: #fd7e14 !important;
-    color: #ffffff !important;
-}
-
-#routes-table .badge[style*="background-color: #6c757d"] {
-    background-color: #6c757d !important;
-    color: #ffffff !important;
-}
-
-/* Colores específicos para badges de estado */
-#routes-table .badge[style*="background-color: #198754"] {
-    background-color: #198754 !important;
-    color: #ffffff !important;
-}
-
-#routes-table .badge[style*="background-color: #ffc107"] {
-    background-color: #ffc107 !important;
-    color: #ffffff !important;
-    /* Para amarillo, usar un tono más oscuro si es necesario para contraste */
-    background-color: #f59e0b !important;
-}
-
-/* Paginación mejorada - estilo GLPI */
-#routes-pagination {
+.codexroute-plugin-pane ul.pagination.codexroute-table-pager {
     margin-bottom: 0;
     display: flex;
     flex-wrap: wrap;
@@ -328,154 +242,96 @@ div.progress,
     justify-content: center;
 }
 
-#routes-pagination .page-item {
+.codexroute-plugin-pane ul.pagination.codexroute-table-pager .page-item {
     margin: 0;
     list-style: none;
 }
 
-#routes-pagination .page-link {
-    color: var(--glpi-color-primary, #007bff);
-    background-color: var(--glpi-color-bg, #fff);
-    border: 1px solid var(--glpi-color-border, #dee2e6);
-    padding: 0.5rem 0.75rem;
-    min-width: 40px;
+.codexroute-plugin-pane ul.pagination.codexroute-table-pager .page-link {
+    color: var(--glpi-color-primary, var(--tblr-primary, #206bc4));
+    background-color: var(--glpi-color-bg, var(--tblr-bg-surface, #fff));
+    border: 1px solid var(--glpi-color-border, var(--tblr-border-color, #dee2e6));
+    padding: 0.375rem 0.65rem;
+    min-width: 2.25rem;
     text-align: center;
-    border-radius: 6px;
-    transition: all 0.15s ease-in-out;
+    border-radius: var(--tblr-border-radius, 4px);
     text-decoration: none;
     display: block;
     line-height: 1.5;
 }
 
-#routes-pagination .page-item.active .page-link {
-    background-color: var(--glpi-color-primary, #007bff);
-    border-color: var(--glpi-color-primary, #007bff);
-    color: white;
+.codexroute-plugin-pane ul.pagination.codexroute-table-pager .page-item.active .page-link {
+    background-color: var(--glpi-color-primary, var(--tblr-primary, #206bc4));
+    border-color: var(--glpi-color-primary, var(--tblr-primary, #206bc4));
+    color: #fff;
     font-weight: 600;
-    z-index: 3;
-    position: relative;
 }
 
-#routes-pagination .page-item.disabled .page-link {
-    color: var(--glpi-color-text-muted, #6c757d);
-    background-color: var(--glpi-color-bg-secondary, #f8f9fa);
-    border-color: var(--glpi-color-border, #dee2e6);
+.codexroute-plugin-pane ul.pagination.codexroute-table-pager .page-item.disabled .page-link {
+    color: var(--glpi-color-text-muted, var(--tblr-secondary, #6c757d));
+    background-color: var(--glpi-color-bg-secondary, var(--tblr-bg-surface-secondary, #f8f9fa));
     pointer-events: none;
     cursor: not-allowed;
     opacity: 0.65;
 }
 
-#routes-pagination .page-link:hover:not(:disabled) {
-    background-color: var(--glpi-color-bg-secondary, #e9ecef);
-    border-color: var(--glpi-color-primary, #007bff);
-    color: var(--glpi-color-primary, #007bff);
-    z-index: 2;
-    position: relative;
+.codexroute-plugin-pane ul.pagination.codexroute-table-pager .page-link:hover:not(.disabled) {
+    background-color: var(--glpi-color-bg-secondary, rgba(0, 0, 0, 0.04));
+    border-color: var(--glpi-color-primary, var(--tblr-primary, #206bc4));
+    color: var(--glpi-color-primary, var(--tblr-primary, #206bc4));
 }
 
-#routes-pagination .page-link:focus {
-    box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25);
-    outline: 0;
-    z-index: 2;
-    position: relative;
-}
-
-/* Badges en tabla - prevenir desbordamiento y mantener texto visible */
-#routes-table .badge {
-    white-space: nowrap !important;
-    display: inline-flex !important;
-    align-items: center !important;
-    font-size: 0.7rem !important;
-    padding: 0.25em 0.5em !important;
-    line-height: 1.2 !important;
-    overflow: visible !important;
-    text-overflow: clip !important;
-    max-width: none !important;
-}
-
-#routes-table td {
+.codexroute-plugin-pane #problematic-routes-table td,
+.codexroute-plugin-pane #allowed-routes-table td {
     vertical-align: middle;
     word-wrap: break-word;
 }
 
-/* Asegurar que los badges no se corten */
-#routes-table .d-flex.flex-wrap {
-    flex-wrap: wrap;
-    gap: 0.25rem;
-    justify-content: center;
-    align-items: center;
-}
-
-/* Forzar que las columnas tengan ancho mínimo */
-#routes-table th,
-#routes-table td {
+.codexroute-plugin-pane #problematic-routes-table th,
+.codexroute-plugin-pane #problematic-routes-table td,
+.codexroute-plugin-pane #allowed-routes-table th,
+.codexroute-plugin-pane #allowed-routes-table td {
     overflow: visible;
 }
 
-#routes-table th:nth-child(4),
-#routes-table td:nth-child(4) {
+.codexroute-plugin-pane #problematic-routes-table th:nth-child(4),
+.codexroute-plugin-pane #problematic-routes-table td:nth-child(4),
+.codexroute-plugin-pane #allowed-routes-table th:nth-child(4),
+.codexroute-plugin-pane #allowed-routes-table td:nth-child(4) {
     min-width: 100px;
 }
 
-#routes-table th:nth-child(5),
-#routes-table td:nth-child(5) {
+.codexroute-plugin-pane #problematic-routes-table th:nth-child(5),
+.codexroute-plugin-pane #problematic-routes-table td:nth-child(5),
+.codexroute-plugin-pane #allowed-routes-table th:nth-child(5),
+.codexroute-plugin-pane #allowed-routes-table td:nth-child(5) {
     min-width: 120px;
 }
 
-/* Footer de tabla - diseño limpio y texto horizontal forzado */
-.card-body .border-top {
+.codexroute-admin-panel .card-body .border-top {
     border-top: 1px solid var(--glpi-color-border, #dee2e6) !important;
 }
 
-/* Forzar texto horizontal en footer - sobrescribir cualquier estilo de GLPI */
-#routes-footer-text,
-#pagination-info {
-    writing-mode: horizontal-tb !important;
-    text-orientation: mixed !important;
-    direction: ltr !important;
-    transform: none !important;
-    white-space: nowrap !important;
-    word-wrap: normal !important;
-    overflow: visible !important;
-    text-overflow: clip !important;
-    line-height: 1.5 !important;
-    letter-spacing: normal !important;
-    unicode-bidi: normal !important;
-    display: inline-block !important;
-    width: auto !important;
-    min-width: 0 !important;
-    max-width: 100% !important;
+.codexroute-pagination-info {
+    direction: ltr;
+    max-width: 100%;
 }
 
-#routes-footer-text *,
-#pagination-info * {
-    writing-mode: horizontal-tb !important;
-    text-orientation: mixed !important;
-    direction: ltr !important;
-    transform: none !important;
-    display: inline !important;
-    white-space: normal !important;
-    word-wrap: normal !important;
-    overflow: visible !important;
-    text-overflow: clip !important;
-    line-height: 1.5 !important;
-    letter-spacing: normal !important;
-    unicode-bidi: normal !important;
+.codexroute-pagination-info span,
+.codexroute-pagination-info strong {
+    white-space: normal;
 }
 
-/* Asegurar que el contenedor del footer tenga suficiente espacio */
-.card-body .border-top > div {
+.codexroute-admin-panel .card-body .border-top > div {
     width: 100% !important;
     min-width: 0 !important;
 }
 
 /* En pantallas pequeñas, permitir wrap pero mantener horizontal */
 @media (max-width: 991px) {
-    #routes-footer-text,
-    #pagination-info {
-        white-space: normal !important;
-        display: block !important;
-        width: 100% !important;
+    .codexroute-pagination-info {
+        display: block;
+        width: 100%;
     }
 }
 
@@ -485,27 +341,17 @@ div.progress,
         padding: var(--glpi-spacing-sm, 15px);
     }
     
-    .codexroute-admin-panel .nav-tabs {
-        flex-direction: column;
-    }
-    
-    .codexroute-admin-panel .nav-tabs .nav-link {
-        width: 100%;
-        justify-content: center;
-    }
-    
     .codexroute-admin-panel .row.g-3 > [class*="col-"] {
         margin-bottom: 1rem;
     }
     
-    /* Ajustes para cards de estadísticas en móvil */
-    .card-body .row.g-3 > [class*="col-"] {
+    .codexroute-admin-panel .card-body .row.g-3 > [class*="col-"] {
         margin-bottom: 1rem;
     }
     
     /* Ocultar algunos elementos en móvil */
-    #routes-table thead th:nth-child(3),
-    #routes-table tbody td:nth-child(3) {
+    .codexroute-plugin-pane #problematic-routes-table thead th:nth-child(3),
+    .codexroute-plugin-pane #problematic-routes-table tbody td:nth-child(3) {
         display: none;
     }
 }
@@ -529,21 +375,19 @@ div.progress,
     box-shadow: 0 8px 16px rgba(0, 0, 0, 0.15) !important;
 }
 
-/* Mejoras para cards de acciones rápidas */
-.card-body .bg-opacity-10 {
+.codexroute-admin-panel .card-body .bg-opacity-10 {
     background-color: rgba(var(--bs-primary-rgb), 0.1) !important;
 }
 
-.card-body .bg-success.bg-opacity-10 {
+.codexroute-admin-panel .card-body .bg-success.bg-opacity-10 {
     background-color: rgba(var(--bs-success-rgb), 0.1) !important;
 }
 
-.card-body .bg-warning.bg-opacity-10 {
+.codexroute-admin-panel .card-body .bg-warning.bg-opacity-10 {
     background-color: rgba(var(--bs-warning-rgb), 0.1) !important;
 }
 
-/* Prevenir texto vertical en acciones rápidas */
-.card-body p.text-muted {
+.codexroute-admin-panel .card-body p.text-muted {
     white-space: normal !important;
     word-wrap: break-word !important;
     overflow-wrap: break-word !important;
@@ -553,8 +397,7 @@ div.progress,
     width: 100% !important;
 }
 
-/* Asegurar que los textos se muestren horizontalmente */
-.card-body .text-center p {
+.codexroute-admin-panel .card-body .text-center p {
     display: block;
     width: 100%;
     text-align: center;

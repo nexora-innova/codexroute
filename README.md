@@ -21,7 +21,7 @@ CodexRoute es un plugin completo de seguridad y optimización de rendimiento par
 ## Requisitos
 
 - GLPI >= 10.0.0
-- PHP >= 7.4
+- PHP >= 8.1
 - Extensión Sodium u OpenSSL (recomendado para mejor encriptación)
 
 ## Instalación

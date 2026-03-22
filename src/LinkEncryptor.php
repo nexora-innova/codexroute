@@ -8,6 +8,14 @@ class LinkEncryptor
     private static $initialized = false;
     private static $output_buffer_started = false;
 
+    /**
+     * Escapa una URL u otro valor para uso seguro dentro de un atributo HTML.
+     */
+    private static function escapeHtmlAttr(string $value): string
+    {
+        return htmlspecialchars($value, ENT_QUOTES | ENT_SUBSTITUTE | ENT_HTML5, 'UTF-8');
+    }
+
     public static function initialize(): void
     {
         if (self::$initialized) {
@@ -28,6 +36,11 @@ class LinkEncryptor
 
         if (file_exists($config_file)) {
             include_once($config_file);
+        }
+
+        $encryption_enabled = defined('CODEXROUTE_ENCRYPTION_ENABLED') ? CODEXROUTE_ENCRYPTION_ENABLED : false;
+        if (!$encryption_enabled) {
+            return;
         }
 
         self::$initialized = true;
@@ -80,14 +93,25 @@ class LinkEncryptor
             include_once($config_file);
         }
 
-        $routes_file = $config_dir . '/codexroute/allowed_routes.php';
-        $allowed_routes = [];
+        $encryption_enabled = defined('CODEXROUTE_ENCRYPTION_ENABLED') ? CODEXROUTE_ENCRYPTION_ENABLED : false;
+        if (!$encryption_enabled) {
+            return $buffer;
+        }
 
-        if (file_exists($routes_file)) {
-            $allowed_routes = include $routes_file;
-            if (!is_array($allowed_routes)) {
-                $allowed_routes = [];
+        // Leer rutas permitidas desde JSON (evita OPcache); fallback a PHP heredado
+        $allowed_routes = [];
+        $json_routes_file = $config_dir . '/codexroute/allowed_routes.json';
+        $php_routes_file  = $config_dir . '/codexroute/allowed_routes.php';
+
+        if (file_exists($json_routes_file)) {
+            $content = @file_get_contents($json_routes_file);
+            if ($content !== false && $content !== '') {
+                $decoded = json_decode($content, true);
+                $allowed_routes = is_array($decoded) ? $decoded : [];
             }
+        } elseif (file_exists($php_routes_file)) {
+            $decoded = @include $php_routes_file;
+            $allowed_routes = is_array($decoded) ? $decoded : [];
         }
 
         // Patrones mejorados para capturar IDs en URLs con diferentes formatos:
@@ -196,7 +220,7 @@ class LinkEncryptor
                         }
                         
                         // Reconstruir el atributo HTML correctamente
-                        $new_url = $attr . '=' . $quote_char . $complete_url . $quote_char;
+                        $new_url = $attr . '=' . $quote_char . self::escapeHtmlAttr($complete_url) . $quote_char;
                         
                         // Marcar como procesado
                         $processed_positions[$match_position] = true;
@@ -211,20 +235,19 @@ class LinkEncryptor
                         }
 
                         // Verificar que no haya múltiples parámetros del mismo tipo en la URL resultante
-                        $param_count = substr_count($new_url, $param_name . '=');
+                        $param_count = substr_count($complete_url, $param_name . '=');
                         if ($param_count > 1) {
-                            // Extraer la URL y reconstruirla sin duplicados
-                            if (preg_match('/href=["\']([^"\']+)["\']/', $new_url, $url_matches)) {
-                                $full_url = $url_matches[1];
-                                $url_parts = parse_url($full_url);
-                                if (isset($url_parts['query'])) {
-                                    parse_str($url_parts['query'], $params);
-                                    // Eliminar todos los parámetros duplicados y agregar solo uno
-                                    unset($params[$param_name]);
-                                    $params[$param_name] = $encrypted_id;
-                                    $new_query = http_build_query($params);
-                                    $new_url = $attr . '="' . $url_parts['path'] . '?' . $new_query . '"';
+                            $dup_parts = parse_url($complete_url);
+                            if (!empty($dup_parts['query'])) {
+                                parse_str($dup_parts['query'], $params);
+                                unset($params[$param_name]);
+                                $params[$param_name] = $encrypted_id;
+                                $new_query = http_build_query($params);
+                                $rebuilt = ($dup_parts['path'] ?? '') . '?' . $new_query;
+                                if (!empty($dup_parts['fragment'])) {
+                                    $rebuilt .= '#' . $dup_parts['fragment'];
                                 }
+                                $new_url = $attr . '=' . $quote_char . self::escapeHtmlAttr($rebuilt) . $quote_char;
                             }
                         }
 

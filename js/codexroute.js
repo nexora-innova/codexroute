@@ -180,19 +180,67 @@
         }, true);
     }
 
-    function showLoader(text) {
-        const loader = document.getElementById('codexroute-loader');
-        const loaderText = document.getElementById('codexroute-loader-text');
-        if (loader && loaderText) {
-            loaderText.textContent = text || 'Procesando...';
-            loader.style.display = 'flex';
+    let codexrouteLoaderTriggerButton = null;
+
+    function codexrouteResolveTriggerButton(el) {
+        if (!el || el.nodeType !== 1) {
+            return null;
+        }
+        if (el.tagName === 'BUTTON' || (el.tagName === 'INPUT' && el.type === 'submit')) {
+            return el;
+        }
+        return el.closest('button');
+    }
+
+    function codexrouteApplyTriggerButtonLoading(el) {
+        const b = codexrouteResolveTriggerButton(el);
+        if (!b || b.dataset.codexrouteBtnLoading === '1') {
+            return null;
+        }
+        b.dataset.codexrouteBtnLoading = '1';
+        b.dataset.codexrouteBtnHtml = b.innerHTML;
+        b.setAttribute('aria-busy', 'true');
+        b.disabled = true;
+        const spin = document.createElement('span');
+        spin.className = 'spinner-border spinner-border-sm me-2 align-middle';
+        spin.setAttribute('role', 'status');
+        spin.setAttribute('aria-hidden', 'true');
+        b.insertBefore(spin, b.firstChild);
+        return b;
+    }
+
+    function codexrouteRestoreTriggerButton(b) {
+        if (!b || b.dataset.codexrouteBtnLoading !== '1') {
+            return;
+        }
+        b.disabled = false;
+        b.removeAttribute('aria-busy');
+        if (b.dataset.codexrouteBtnHtml !== undefined) {
+            b.innerHTML = b.dataset.codexrouteBtnHtml;
+            delete b.dataset.codexrouteBtnHtml;
+        }
+        delete b.dataset.codexrouteBtnLoading;
+    }
+
+    function showLoader(opts) {
+        if (typeof opts === 'string') {
+            opts = {};
+        }
+        opts = opts || {};
+        hideLoader();
+        let btn = opts.triggerButton ? codexrouteResolveTriggerButton(opts.triggerButton) : null;
+        if (!btn && opts.triggerButtonId) {
+            btn = document.getElementById(opts.triggerButtonId);
+        }
+        if (btn) {
+            codexrouteLoaderTriggerButton = codexrouteApplyTriggerButtonLoading(btn);
         }
     }
 
     function hideLoader() {
-        const loader = document.getElementById('codexroute-loader');
-        if (loader) {
-            loader.style.display = 'none';
+        if (codexrouteLoaderTriggerButton) {
+            codexrouteRestoreTriggerButton(codexrouteLoaderTriggerButton);
+            codexrouteLoaderTriggerButton = null;
         }
     }
 
@@ -244,24 +292,23 @@
         return meta ? meta.content : '';
     }
 
-    function executeAction(action, params) {
+    function executeAction(action, params, triggerButton) {
         params = params || {};
         
-        const actionTexts = {
-            'analyze_apache': 'Analizando rendimiento Apache/PHP...',
-            'analyze_database': 'Analizando base de datos...',
-            'profile_sql': 'Ejecutando profiling SQL...',
-            'analyze_views': 'Analizando vistas...',
-            'analyze_mysql_config': 'Analizando configuración MySQL...'
-        };
+        const csrfToken = getCsrfToken();
+        const actionsRequiringCsrf = ['optimize_table_indexes'];
+        if (actionsRequiringCsrf.indexOf(action) !== -1 && !csrfToken) {
+            showMessage('Error', __('No se pudo obtener el token CSRF. Por favor, recarga la página.', 'codexroute'), 'error');
+            return;
+        }
         
-        showLoader(actionTexts[action] || 'Procesando...');
+        showLoader({ triggerButton: triggerButton });
         
         const xhr = new XMLHttpRequest();
         xhr.open('POST', AJAX_URL, true);
         xhr.setRequestHeader('Content-Type', 'application/x-www-form-urlencoded');
+        xhr.setRequestHeader('Accept', 'application/json, text/html, */*');
         
-        const csrfToken = getCsrfToken();
         if (csrfToken) {
             xhr.setRequestHeader('X-Glpi-Csrf-Token', csrfToken);
         }
@@ -304,6 +351,22 @@
         }
         
         switch(action) {
+
+            case 'allow_route':
+            case 'block_route':
+            case 'allow_all_blocked_routes':
+                showMessage('Éxito', data.message || 'Operación completada', 'success');
+                setTimeout(function() {
+                    window.location.href = window.location.pathname + '?tab=routes';
+                }, 900);
+                break;
+
+            case 'scan_routes':
+                showMessage('Éxito', 'Análisis completado', 'success');
+                setTimeout(function() {
+                    window.location.href = window.location.pathname + '?tab=routes';
+                }, 900);
+                break;
                 
             case 'analyze_apache':
                 displayApacheResults(data.results);
@@ -325,233 +388,200 @@
     function displayApacheResults(results) {
         const container = document.getElementById('apache-results-content');
         const resultsDiv = document.getElementById('apache-results');
-        
+
         if (!container || !resultsDiv) return;
-        
-        resultsDiv.style.display = 'block';
-        
-        let html = '<div class="codexroute-stats-grid">';
-        
+
+        resultsDiv.classList.remove('d-none');
+
+        let html = '<div class="table-responsive-md border-bottom">';
+        html += '<table class="table table-hover table-card mb-0"><tbody>';
+
         if (results.php) {
-            html += '<div class="codexroute-stat-card">';
-            html += '<div class="codexroute-stat-value">' + (results.php.performance * 1000).toFixed(2) + ' ms</div>';
-            html += '<div class="codexroute-stat-label">Rendimiento PHP</div>';
-            html += '</div>';
+            html += '<tr><th class="w-25 text-muted fw-normal">Rendimiento PHP</th><td>' +
+                (results.php.performance * 1000).toFixed(2) + ' ms</td></tr>';
         }
-        
+
         if (results.database) {
-            html += '<div class="codexroute-stat-card">';
-            html += '<div class="codexroute-stat-value">' + (results.database.connect_time * 1000).toFixed(2) + ' ms</div>';
-            html += '<div class="codexroute-stat-label">Latencia BD</div>';
-            html += '</div>';
+            html += '<tr><th class="text-muted fw-normal">Latencia BD</th><td>' +
+                (results.database.connect_time * 1000).toFixed(2) + ' ms</td></tr>';
         }
-        
-        html += '</div>';
-        
+
+        html += '</tbody></table></div>';
+
         if (results.warnings && results.warnings.length > 0) {
-            html += '<div class="codexroute-alert warning"><strong>Advertencias:</strong><ul>';
+            html += '<div class="alert alert-warning m-3" role="alert"><strong>Advertencias:</strong><ul class="mb-0 mt-2">';
             results.warnings.forEach(function(warning) {
                 html += '<li>' + escapeHtml(warning.component) + ': ' + escapeHtml(warning.issue) + '</li>';
             });
             html += '</ul></div>';
         } else {
-            html += '<div class="codexroute-alert success"><strong>Sin advertencias.</strong> El rendimiento es óptimo.</div>';
+            html += '<div class="alert alert-success m-3" role="alert">' +
+                '<strong>Sin advertencias.</strong> El rendimiento es óptimo.</div>';
         }
-        
+
         container.innerHTML = html;
     }
 
     function displayDatabaseResults(results) {
         const container = document.getElementById('database-results-content');
         const resultsDiv = document.getElementById('database-results');
-        
+
         if (!container || !resultsDiv) return;
-        
-        resultsDiv.style.display = 'block';
-        
+
+        resultsDiv.classList.remove('d-none');
+
         let html = '';
-        
+
         if (results.slow_queries && results.slow_queries.length > 0) {
-            html += '<div class="codexroute-alert warning"><strong>Consultas Lentas Detectadas:</strong> ' + results.slow_queries.length + '</div>';
-            html += '<div class="codexroute-table-container"><table class="codexroute-table"><thead><tr>';
+            html += '<div class="alert alert-warning mx-3 mt-3 mb-0" role="alert"><strong>Consultas lentas:</strong> ' +
+                results.slow_queries.length + '</div>';
+            html += '<div class="search_page codexroute-embedded-search mx-3 mb-3"><div class="search-container disable-overflow-y">';
+            html += '<div class="card card-sm mt-0 search-card"><div class="card-header d-flex justify-content-between search-header pe-0 py-2">';
+            html += '<h3 class="card-title mb-0 fs-5">Consultas lentas</h3></div>';
+            html += '<div class="table-responsive-lg"><table class="search-results table card-table table-hover table-striped mb-0"><thead><tr>';
             html += '<th>Tabla</th><th>Tiempo</th><th>Filas</th>';
             html += '</tr></thead><tbody>';
-            
+
             results.slow_queries.forEach(function(q) {
                 html += '<tr>';
-                html += '<td><code>' + escapeHtml(q.table) + '</code></td>';
-                html += '<td style="color: #dc3545;">' + (q.time * 1000).toFixed(2) + ' ms</td>';
+                html += '<td><span class="text-break">' + escapeHtml(q.table) + '</span></td>';
+                html += '<td class="text-danger fw-semibold">' + (q.time * 1000).toFixed(2) + ' ms</td>';
                 html += '<td>' + (q.rows || 0) + '</td>';
                 html += '</tr>';
             });
-            
-            html += '</tbody></table></div>';
+
+            html += '</tbody></table></div></div></div></div>';
         } else {
-            html += '<div class="codexroute-alert success">No se detectaron consultas lentas.</div>';
+            html += '<div class="alert alert-success m-3" role="alert">No se detectaron consultas lentas.</div>';
         }
-        
+
         if (results.table_stats && results.table_stats.length > 0) {
-            html += '<div class="card mb-3" style="margin-top: 20px;">';
-            html += '<div class="card-header d-flex justify-content-between align-items-center">';
-            html += '<h3 class="card-title mb-0"><i class="ti ti-table"></i> Estadísticas por Tabla</h3>';
-            html += '<div class="d-flex gap-2">';
-            html += '<div class="input-group input-group-sm" style="max-width: 250px;">';
-            html += '<span class="input-group-text"><i class="ti ti-search"></i></span>';
+            tableStatsInitialized = false;
+            tableStatsAllRows = [];
+            const listLimitRaw = parseInt(window.codexrouteGlpiListLimit, 10);
+            const listLimit = Number.isFinite(listLimitRaw) && listLimitRaw > 0 ? listLimitRaw : 20;
+            const statsPagerInner = typeof window.codexrouteBuildSearchPagerInnerHtml === 'function'
+                ? window.codexrouteBuildSearchPagerInnerHtml(
+                    'codexroute-table-stats',
+                    'codexroute-limit-table-stats',
+                    listLimit,
+                    'table-stats-pagination'
+                )
+                : '';
+
+            html += '<div class="search_page codexroute-embedded-search mx-3 mb-3"><div class="search-container disable-overflow-y">';
+            html += '<div class="card card-sm mt-0 search-card">';
+            html += '<div class="card-header d-flex justify-content-between search-header pe-0 flex-wrap align-items-center gap-2 py-2">';
+            html += '<h3 class="card-title mb-0 fs-5">Estadísticas por Tabla</h3>';
+            html += '<div class="input-group input-group-sm flex-grow-1 flex-sm-grow-0 ms-lg-auto" style="min-width: 12rem; max-width: 100%;">';
+            html += '<span class="input-group-text" aria-hidden="true"><i class="ti ti-search"></i></span>';
             html += '<input type="text" class="form-control" id="table-stats-search" placeholder="Buscar tabla..." onkeyup="filterTableStats()">';
-            html += '</div>';
-            html += '</div>';
-            html += '</div>';
-            html += '<div class="card-body">';
-            html += '<div class="table-responsive">';
-            html += '<table class="table table-hover" id="table-stats-table">';
+            html += '</div></div>';
+            html += '<div class="table-responsive-lg">';
+            html += '<table class="search-results table card-table table-hover table-striped mb-0" id="table-stats-table">';
             html += '<thead><tr>';
             html += '<th style="width: 4%; min-width: 40px;">#</th>';
-            html += '<th style="width: 40%;">Tabla</th>';
-            html += '<th style="width: 18%;" class="text-center">Filas</th>';
-            html += '<th style="width: 18%;" class="text-center">Tamaño (MB)</th>';
-            html += '<th style="width: 20%; min-width: 120px;" class="text-center">Fragmentación (%)</th>';
+            html += '<th>Tabla</th>';
+            html += '<th class="text-center">Filas</th>';
+            html += '<th class="text-center">Tamaño (MB)</th>';
+            html += '<th class="text-center">Fragmentación (%)</th>';
             html += '</tr></thead><tbody>';
-            
+
             results.table_stats.forEach(function(stat, index) {
                 const fragPercent = parseFloat(stat.frag_percent) || 0;
-                const fragColor = fragPercent > 10 ? '#dc3545' : (fragPercent > 5 ? '#ffc107' : '#28a745');
-                const fragBadgeClass = fragPercent > 10 ? 'danger' : (fragPercent > 5 ? 'warning' : 'success');
-                
+                const fragBg = fragPercent > 10 ? 'danger' : (fragPercent > 5 ? 'warning' : 'success');
+                const fragBadgeExtra = fragPercent > 5 && fragPercent <= 10 ? ' text-dark' : '';
+                const fragIcon = fragPercent > 10 ? 'alert-triangle' : (fragPercent > 5 ? 'alert-circle' : 'check');
+
                 html += '<tr class="table-stat-row" data-table="' + escapeHtml(stat.table).toLowerCase() + '">';
                 html += '<td class="text-muted">' + (index + 1) + '</td>';
-                html += '<td>';
-                html += '<div class="d-flex align-items-center">';
-                html += '<i class="ti ti-database text-primary me-2"></i>';
-                html += '<code class="text-primary">' + escapeHtml(stat.table) + '</code>';
-                html += '</div>';
-                html += '</td>';
-                html += '<td class="text-center">';
-                html += '<span class="fw-semibold">' + (stat.rows || 0).toLocaleString() + '</span>';
-                html += '</td>';
-                html += '<td class="text-center">';
-                html += '<span class="fw-semibold">' + (parseFloat(stat.size_mb) || 0).toFixed(2) + '</span>';
-                html += '</td>';
-                html += '<td class="text-center" style="min-width: 120px;">';
-                html += '<span class="badge text-white d-inline-flex align-items-center" style="background-color: ' + fragColor + '; white-space: nowrap; font-size: 0.75rem; padding: 0.4em 0.7em; font-weight: 500;">';
-                html += '<i class="ti ti-' + (fragPercent > 10 ? 'alert-triangle' : (fragPercent > 5 ? 'alert-circle' : 'check')) + ' me-1" style="font-size: 0.85em;"></i>';
-                html += '<span>' + fragPercent.toFixed(2) + '%</span>';
-                html += '</span>';
-                html += '</td>';
-                html += '</tr>';
+                html += '<td><span class="text-break fw-medium">' + escapeHtml(stat.table) + '</span></td>';
+                html += '<td class="text-center"><span class="fw-semibold">' + (stat.rows || 0).toLocaleString() + '</span></td>';
+                html += '<td class="text-center"><span class="fw-semibold">' + (parseFloat(stat.size_mb) || 0).toFixed(2) + '</span></td>';
+                html += '<td class="text-center text-nowrap">';
+                html += '<span class="badge bg-' + fragBg + fragBadgeExtra + ' d-inline-flex align-items-center gap-1">';
+                html += '<i class="ti ti-' + fragIcon + '"></i><span>' + fragPercent.toFixed(2) + '%</span></span>';
+                html += '</td></tr>';
             });
-            
-            html += '</tbody></table>';
-            html += '</div>';
-            html += '<div class="mt-3 pt-3 border-top">';
-            html += '<div class="d-flex flex-column flex-lg-row justify-content-between align-items-start align-items-lg-center gap-3">';
-            html += '<div class="flex-grow-1" style="min-width: 0; writing-mode: horizontal-tb !important; text-orientation: mixed !important; direction: ltr !important;">';
-            html += '<div class="text-muted small mb-1" id="table-stats-footer-text" style="writing-mode: horizontal-tb !important; text-orientation: mixed !important; direction: ltr !important; white-space: nowrap !important; display: inline-block !important; width: 100%; max-width: 100%; overflow: visible !important;">';
-            html += '<span id="table-stats-count" style="display: inline !important; white-space: normal !important;">' + results.table_stats.length + '</span> ';
-            html += '<span style="display: inline !important; white-space: normal !important;">de</span> ';
-            html += '<strong style="display: inline !important; white-space: normal !important;">' + results.table_stats.length + '</strong> ';
-            html += '<span style="display: inline !important; white-space: normal !important;">tablas</span>';
-            html += '</div>';
-            html += '<div id="table-stats-pagination-info" class="text-muted small" style="display: none; writing-mode: horizontal-tb !important; text-orientation: mixed !important; direction: ltr !important; white-space: nowrap !important; display: inline-block !important; width: 100%; max-width: 100%; overflow: visible !important;">';
-            html += '<span style="display: inline !important; white-space: normal !important;">Mostrando</span> ';
-            html += '<span id="table-stats-page-start" style="display: inline !important; white-space: normal !important;">1</span>';
-            html += '<span style="display: inline !important; white-space: normal !important;">-</span>';
-            html += '<span id="table-stats-page-end" style="display: inline !important; white-space: normal !important;">' + results.table_stats.length + '</span> ';
-            html += '<span style="display: inline !important; white-space: normal !important;">de</span> ';
-            html += '<strong id="table-stats-total-filtered" style="display: inline !important; white-space: normal !important;">' + results.table_stats.length + '</strong>';
-            html += '</div>';
-            html += '</div>';
-            html += '<div class="flex-shrink-0" style="writing-mode: horizontal-tb !important; text-orientation: mixed !important; direction: ltr !important;">';
-            html += '<nav aria-label="Paginación de estadísticas de tablas" style="writing-mode: horizontal-tb !important; text-orientation: mixed !important; direction: ltr !important;">';
-            html += '<ul class="pagination pagination-sm mb-0" id="table-stats-pagination" style="writing-mode: horizontal-tb !important; text-orientation: mixed !important; direction: ltr !important;">';
-            html += '</ul>';
-            html += '</nav>';
-            html += '</div>';
-            html += '</div>';
-            html += '</div>';
-            html += '</div>';
-            
-            // Inicializar funciones de filtrado y paginación después de insertar el HTML
+
+            html += '</tbody></table></div>';
+            html += '<div class="card-footer search-footer">' + statsPagerInner + '</div>';
+            html += '</div></div></div>';
+
             setTimeout(function() {
                 initializeTableStats();
             }, 100);
         }
-        
+
         if (results.views && results.views.length > 0) {
-            html += '<h4 style="margin-top: 20px;">Análisis de Vistas</h4>';
-            html += '<div class="codexroute-table-container"><table class="codexroute-table"><thead><tr>';
+            html += '<div class="search_page codexroute-embedded-search mx-3 mb-3"><div class="search-container disable-overflow-y">';
+            html += '<div class="card card-sm mt-0 search-card"><div class="card-header d-flex justify-content-between search-header pe-0 py-2">';
+            html += '<h3 class="card-title mb-0 fs-5">Análisis de Vistas</h3></div>';
+            html += '<div class="table-responsive-lg"><table class="search-results table card-table table-hover table-striped mb-0"><thead><tr>';
             html += '<th>Vista</th><th>Tiempo</th><th>Filas</th>';
             html += '</tr></thead><tbody>';
-            
+
             results.views.forEach(function(view) {
                 const timeMs = view.total_time * 1000;
-                const timeColor = timeMs > 5000 ? '#dc3545' : (timeMs > 1000 ? '#ffc107' : '#28a745');
+                const timeClass = timeMs > 5000 ? 'text-danger' : (timeMs > 1000 ? 'text-warning' : 'text-success');
                 html += '<tr>';
-                html += '<td>' + escapeHtml(view.name) + '</td>';
-                html += '<td style="color: ' + timeColor + ';">' + timeMs.toFixed(2) + ' ms</td>';
+                html += '<td><span class="text-break">' + escapeHtml(view.name) + '</span></td>';
+                html += '<td class="fw-semibold ' + timeClass + '">' + timeMs.toFixed(2) + ' ms</td>';
                 html += '<td>' + (view.rows || 0) + '</td>';
                 html += '</tr>';
             });
-            
-            html += '</tbody></table></div>';
+
+            html += '</tbody></table></div></div></div></div>';
         }
-        
+
         container.innerHTML = html;
     }
 
     // Funciones de validación eliminadas - ya no se necesitan con GlobalValidator
     // La validación ahora se hace globalmente a través de GlobalValidator::validate()
 
-    function allowRoute(file) {
-        if (typeof glpi_confirm === 'function') {
-            glpi_confirm({
-                title: __('Confirmar acción', 'codexroute'),
-                message: __('¿Permitir la ruta:', 'codexroute') + ' <strong>' + escapeHtml(file) + '</strong>?',
-                confirm_callback: function() {
-                    executeAction('allow_route', { file: file });
-                },
-                confirm_label: __('Permitir', 'codexroute'),
-                cancel_label: __('Cancelar', 'codexroute')
-            });
-        } else {
-            if (confirm('¿Permitir la ruta: ' + file + '?')) {
-                executeAction('allow_route', { file: file });
-            }
+    function allowRoute(file, triggerButton) {
+        if (!confirm('¿Permitir la ruta "' + file + '"?')) {
+            return;
         }
+        executeAction('allow_route', { file: file }, triggerButton);
     }
 
-    function blockRoute(file) {
-        if (typeof glpi_confirm === 'function') {
-            glpi_confirm({
-                title: __('Confirmar acción', 'codexroute'),
-                message: __('¿Bloquear la ruta:', 'codexroute') + ' <strong>' + escapeHtml(file) + '</strong>?',
-                confirm_callback: function() {
-                    executeAction('block_route', { file: file });
-                },
-                confirm_label: __('Bloquear', 'codexroute'),
-                cancel_label: __('Cancelar', 'codexroute')
-            });
-        } else {
-            if (confirm('¿Bloquear la ruta: ' + file + '?')) {
-                executeAction('block_route', { file: file });
-            }
+    function blockRoute(file, triggerButton) {
+        if (!confirm('¿Bloquear/remover la ruta "' + file + '"?')) {
+            return;
         }
+        executeAction('block_route', { file: file }, triggerButton);
     }
 
-    function optimizeTable(tableName, tableDb) {
+    function scanRoutes(triggerButton) {
+        executeAction('scan_routes', {}, triggerButton);
+    }
+
+    function allowAllBlockedRoutes(triggerButton) {
+        if (!confirm('¿Permitir todas las rutas bloqueadas detectadas?')) {
+            return;
+        }
+        executeAction('allow_all_blocked_routes', {}, triggerButton);
+    }
+
+    function optimizeTable(tableName, tableDb, triggerButton) {
+        const run = function() {
+            executeAction('optimize_table_indexes', { table_name: tableName, table_db: tableDb }, triggerButton);
+        };
         if (typeof glpi_confirm === 'function') {
             glpi_confirm({
+                id: 'codexroute_modal_confirm_optimize_table',
                 title: __('Confirmar optimización', 'codexroute'),
                 message: __('¿Optimizar los índices de', 'codexroute') + ' <strong>' + escapeHtml(tableName) + '</strong>?<br><br>' + 
                          '<small class="text-muted">' + __('Esto puede tardar varios minutos.', 'codexroute') + '</small>',
-                confirm_callback: function() {
-                    executeAction('optimize_table_indexes', { table_name: tableName, table_db: tableDb });
-                },
+                confirm_callback: run,
                 confirm_label: __('Optimizar', 'codexroute'),
                 cancel_label: __('Cancelar', 'codexroute')
             });
         } else {
             if (confirm('¿Optimizar los índices de ' + tableName + '?\n\nEsto puede tardar varios minutos.')) {
-                executeAction('optimize_table_indexes', { table_name: tableName, table_db: tableDb });
+                run();
             }
         }
     }
@@ -573,19 +603,18 @@
             }
         });
         
-        showLoader('Guardando configuración...');
-        
+        const csrfToken = getCsrfToken();
+        if (!csrfToken) {
+            showMessage('Error', 'No se pudo obtener el token CSRF. Por favor, recarga la página.', 'error');
+            return;
+        }
+
+        showLoader({ triggerButtonId: 'btn-save-config' });
+
         const xhr = new XMLHttpRequest();
         xhr.open('POST', AJAX_URL, true);
         xhr.setRequestHeader('Content-Type', 'application/x-www-form-urlencoded');
         xhr.setRequestHeader('Accept', 'application/json');
-        
-        const csrfToken = getCsrfToken();
-        if (!csrfToken) {
-            showMessage('Error', 'No se pudo obtener el token CSRF. Por favor, recarga la página.', 'error');
-            hideLoader();
-            return;
-        }
         
         xhr.setRequestHeader('X-Glpi-Csrf-Token', csrfToken);
         
@@ -677,7 +706,7 @@
             return;
         }
         
-        showLoader('Generando archivo de configuración...');
+        showLoader({ triggerButtonId: 'btn-generate-config' });
         
         const xhr = new XMLHttpRequest();
         xhr.open('POST', AJAX_URL, true);
@@ -743,7 +772,6 @@
     // Funciones para Estadísticas por Tabla
     let tableStatsAllRows = [];
     let tableStatsCurrentPage = 1;
-    const tableStatsItemsPerPage = 20;
     let tableStatsAllVisibleRows = [];
     let tableStatsInitialized = false;
 
@@ -819,123 +847,270 @@
     }
 
     function displayTableStatsPage() {
-        const start = (tableStatsCurrentPage - 1) * tableStatsItemsPerPage;
-        const end = start + tableStatsItemsPerPage;
-        
+        const limit = typeof window.codexrouteGetPageSizeForTable === 'function'
+            ? window.codexrouteGetPageSizeForTable('table-stats-table')
+            : 20;
+        const start = (tableStatsCurrentPage - 1) * limit;
+        const end = start + limit;
+        const total = tableStatsAllVisibleRows.length;
+
         requestAnimationFrame(() => {
             for (let i = 0; i < tableStatsAllVisibleRows.length; i++) {
                 const row = tableStatsAllVisibleRows[i];
-                if (i >= start && i < end) {
-                    row.style.display = '';
-                } else {
-                    row.style.display = 'none';
-                }
+                row.style.display = (i >= start && i < end) ? '' : 'none';
             }
-            
-            const pageStart = tableStatsAllVisibleRows.length > 0 ? start + 1 : 0;
-            const pageEnd = Math.min(end, tableStatsAllVisibleRows.length);
-            
-            const countEl = document.getElementById('table-stats-count');
-            const startEl = document.getElementById('table-stats-page-start');
-            const endEl = document.getElementById('table-stats-page-end');
-            const totalEl = document.getElementById('table-stats-total-filtered');
-            const infoEl = document.getElementById('table-stats-pagination-info');
-            
-            if (countEl) countEl.textContent = tableStatsAllVisibleRows.length;
-            if (startEl) startEl.textContent = pageStart;
-            if (endEl) endEl.textContent = pageEnd;
-            if (totalEl) totalEl.textContent = tableStatsAllVisibleRows.length;
-            
-            if (infoEl) {
-                if (tableStatsAllVisibleRows.length > tableStatsItemsPerPage) {
-                    infoEl.style.display = 'block';
+
+            if (typeof window.codexrouteFillPageInfos === 'function') {
+                if (total === 0) {
+                    window.codexrouteFillPageInfos('codexroute-table-stats', 0, 0, 0);
                 } else {
-                    infoEl.style.display = 'none';
+                    const pageStart = start + 1;
+                    const pageEnd = Math.min(end, total);
+                    window.codexrouteFillPageInfos('codexroute-table-stats', pageStart, pageEnd, total);
                 }
             }
         });
     }
 
     function updateTableStatsPagination() {
-        const totalPages = Math.ceil(tableStatsAllVisibleRows.length / tableStatsItemsPerPage);
-        const pagination = document.getElementById('table-stats-pagination');
-        if (!pagination) return;
-        
-        pagination.innerHTML = '';
-        
-        if (totalPages <= 1) {
+        if (typeof window.codexrouteGetPageSizeForTable !== 'function' ||
+            typeof window.codexrouteRenderGlpiPager !== 'function') {
             return;
         }
-        
-        const prevLi = document.createElement('li');
-        prevLi.className = `page-item ${tableStatsCurrentPage === 1 ? 'disabled' : ''}`;
-        prevLi.innerHTML = `<a class="page-link" href="#" onclick="goToTableStatsPage(${tableStatsCurrentPage - 1}); return false;">
-            <i class="ti ti-chevron-left"></i> <span class="d-none d-sm-inline">Anterior</span>
-        </a>`;
-        pagination.appendChild(prevLi);
-        
-        const maxVisible = 5;
-        let startPage = Math.max(1, tableStatsCurrentPage - Math.floor(maxVisible / 2));
-        let endPage = Math.min(totalPages, startPage + maxVisible - 1);
-        
-        if (endPage - startPage < maxVisible - 1) {
-            startPage = Math.max(1, endPage - maxVisible + 1);
+        const limit = window.codexrouteGetPageSizeForTable('table-stats-table');
+        const total = tableStatsAllVisibleRows.length;
+        const totalPages = Math.max(1, Math.ceil(total / limit));
+        if (tableStatsCurrentPage > totalPages) {
+            tableStatsCurrentPage = totalPages;
         }
-        
-        if (startPage > 1) {
-            const firstLi = document.createElement('li');
-            firstLi.className = 'page-item';
-            firstLi.innerHTML = `<a class="page-link" href="#" onclick="goToTableStatsPage(1); return false;">1</a>`;
-            pagination.appendChild(firstLi);
-            
-            if (startPage > 2) {
-                const dotsLi = document.createElement('li');
-                dotsLi.className = 'page-item disabled';
-                dotsLi.innerHTML = `<span class="page-link">...</span>`;
-                pagination.appendChild(dotsLi);
-            }
-        }
-        
-        for (let i = startPage; i <= endPage; i++) {
-            const li = document.createElement('li');
-            li.className = `page-item ${i === tableStatsCurrentPage ? 'active' : ''}`;
-            li.innerHTML = `<a class="page-link" href="#" onclick="goToTableStatsPage(${i}); return false;">${i}</a>`;
-            pagination.appendChild(li);
-        }
-        
-        if (endPage < totalPages) {
-            if (endPage < totalPages - 1) {
-                const dotsLi = document.createElement('li');
-                dotsLi.className = 'page-item disabled';
-                dotsLi.innerHTML = `<span class="page-link">...</span>`;
-                pagination.appendChild(dotsLi);
-            }
-            
-            const lastLi = document.createElement('li');
-            lastLi.className = 'page-item';
-            lastLi.innerHTML = `<a class="page-link" href="#" onclick="goToTableStatsPage(${totalPages}); return false;">${totalPages}</a>`;
-            pagination.appendChild(lastLi);
-        }
-        
-        const nextLi = document.createElement('li');
-        nextLi.className = `page-item ${tableStatsCurrentPage === totalPages ? 'disabled' : ''}`;
-        nextLi.innerHTML = `<a class="page-link" href="#" onclick="goToTableStatsPage(${tableStatsCurrentPage + 1}); return false;">
-            <span class="d-none d-sm-inline">Siguiente</span> <i class="ti ti-chevron-right"></i>
-        </a>`;
-        pagination.appendChild(nextLi);
+        window.codexrouteRenderGlpiPager(
+            'table-stats-pagination',
+            tableStatsCurrentPage,
+            totalPages,
+            limit,
+            'goToTableStatsPage'
+        );
     }
 
     function goToTableStatsPage(page) {
-        const totalPages = Math.ceil(tableStatsAllVisibleRows.length / tableStatsItemsPerPage);
-        if (page < 1 || page > totalPages) return;
+        const limit = typeof window.codexrouteGetPageSizeForTable === 'function'
+            ? window.codexrouteGetPageSizeForTable('table-stats-table')
+            : 20;
+        const totalPages = Math.max(1, Math.ceil(tableStatsAllVisibleRows.length / limit));
+        if (page < 1 || page > totalPages) {
+            return;
+        }
         tableStatsCurrentPage = page;
         displayTableStatsPage();
         updateTableStatsPagination();
     }
 
+    function initCodexrouteDatabaseResultsLimitListener() {
+        const wrap = document.getElementById('database-results');
+        if (!wrap || wrap.dataset.codexrouteStatsLimitBound) {
+            return;
+        }
+        wrap.dataset.codexrouteStatsLimitBound = '1';
+        wrap.addEventListener('change', function(ev) {
+            if (!ev.target.classList.contains('search-limit-dropdown')) {
+                return;
+            }
+            const card = ev.target.closest('.search-card');
+            if (!card || !card.querySelector('#table-stats-table')) {
+                return;
+            }
+            const lim = parseInt(ev.target.value, 10) || 20;
+            const totalPages = Math.max(1, Math.ceil(tableStatsAllVisibleRows.length / lim));
+            if (tableStatsCurrentPage > totalPages) {
+                tableStatsCurrentPage = totalPages;
+            }
+            updateTableStatsPagination();
+            displayTableStatsPage();
+        });
+    }
+
+    function initCodexrouteAdminTabs() {
+        const jsonEl = document.getElementById('codexroute-admin-tabs-json');
+        const root = document.getElementById('codexroute-admin-root');
+        if (!jsonEl || !root) {
+            return;
+        }
+        let cfg;
+        try {
+            cfg = JSON.parse(jsonEl.textContent);
+        } catch (err) {
+            return;
+        }
+        if (!cfg.tabs_order || !Array.isArray(cfg.tabs_order)) {
+            return;
+        }
+        let currentTabsOrder = cfg.tabs_order.slice();
+        const originalTabsOrder = cfg.tabs_order.slice();
+        const activeTab = cfg.active_tab || currentTabsOrder[0] || 'config';
+
+        function toggleTabsOrderPanel() {
+            const panel = document.getElementById('tabs-order-panel');
+            const main = document.getElementById('codexroute-main-layout');
+            if (!panel || !main) {
+                return;
+            }
+            const opening = panel.classList.contains('d-none');
+            if (opening) {
+                panel.classList.remove('d-none');
+                main.classList.add('d-none');
+            } else {
+                panel.classList.add('d-none');
+                main.classList.remove('d-none');
+            }
+        }
+
+        function moveTabUp(tabKey) {
+            const index = currentTabsOrder.indexOf(tabKey);
+            if (index > 0) {
+                const tmp = currentTabsOrder[index - 1];
+                currentTabsOrder[index - 1] = currentTabsOrder[index];
+                currentTabsOrder[index] = tmp;
+                updateTabsOrderDisplay();
+            }
+        }
+
+        function moveTabDown(tabKey) {
+            const index = currentTabsOrder.indexOf(tabKey);
+            if (index < currentTabsOrder.length - 1) {
+                const tmp = currentTabsOrder[index + 1];
+                currentTabsOrder[index + 1] = currentTabsOrder[index];
+                currentTabsOrder[index] = tmp;
+                updateTabsOrderDisplay();
+            }
+        }
+
+        function updateTabsOrderDisplay() {
+            const orderList = document.getElementById('tabs-order-list');
+            if (!orderList) {
+                return;
+            }
+            const tabs = Array.from(orderList.children);
+            currentTabsOrder.forEach(function(tabKey, index) {
+                const tabElement = tabs.find(function(el) {
+                    return el.dataset.tabKey === tabKey;
+                });
+                if (tabElement) {
+                    orderList.appendChild(tabElement);
+                    const upBtn = tabElement.querySelector('.codexroute-tab-move-up');
+                    const downBtn = tabElement.querySelector('.codexroute-tab-move-down');
+                    if (upBtn) {
+                        upBtn.disabled = (index === 0);
+                    }
+                    if (downBtn) {
+                        downBtn.disabled = (index === currentTabsOrder.length - 1);
+                    }
+                }
+            });
+        }
+
+        function saveTabsOrderPost() {
+            const form = document.createElement('form');
+            form.method = 'POST';
+            form.action = window.location.pathname + '?tab=' + encodeURIComponent(activeTab);
+            const input = document.createElement('input');
+            input.type = 'hidden';
+            input.name = 'tabs_order';
+            input.value = JSON.stringify(currentTabsOrder);
+            form.appendChild(input);
+            const submitInput = document.createElement('input');
+            submitInput.type = 'hidden';
+            submitInput.name = 'save_tabs_order';
+            submitInput.value = '1';
+            form.appendChild(submitInput);
+            const csrfToken = document.querySelector('input[name="_glpi_csrf_token"]');
+            if (csrfToken) {
+                const csrfInput = document.createElement('input');
+                csrfInput.type = 'hidden';
+                csrfInput.name = '_glpi_csrf_token';
+                csrfInput.value = csrfToken.value;
+                form.appendChild(csrfInput);
+            }
+            document.body.appendChild(form);
+            form.submit();
+        }
+
+        function resetTabsOrderToOriginal() {
+            currentTabsOrder = originalTabsOrder.slice();
+            updateTabsOrderDisplay();
+        }
+
+        root.addEventListener('click', function(ev) {
+            const toggleEl = ev.target.closest('.codexroute-toggle-order');
+            if (toggleEl) {
+                ev.preventDefault();
+                toggleTabsOrderPanel();
+                const menu = toggleEl.closest('.dropdown-menu');
+                if (menu) {
+                    const dd = menu.closest('.dropdown');
+                    const tgl = dd ? dd.querySelector('[data-bs-toggle="dropdown"]') : null;
+                    if (tgl && typeof bootstrap !== 'undefined' && bootstrap.Dropdown) {
+                        const instance = bootstrap.Dropdown.getInstance(tgl);
+                        if (instance) {
+                            instance.hide();
+                        }
+                    }
+                }
+                return;
+            }
+            const up = ev.target.closest('.codexroute-tab-move-up');
+            if (up && !up.disabled) {
+                ev.preventDefault();
+                moveTabUp(up.getAttribute('data-codexroute-tab'));
+                return;
+            }
+            const down = ev.target.closest('.codexroute-tab-move-down');
+            if (down && !down.disabled) {
+                ev.preventDefault();
+                moveTabDown(down.getAttribute('data-codexroute-tab'));
+                return;
+            }
+            if (ev.target.closest('.codexroute-save-tabs-order')) {
+                ev.preventDefault();
+                saveTabsOrderPost();
+                return;
+            }
+            if (ev.target.closest('.codexroute-reset-tabs-order')) {
+                ev.preventDefault();
+                resetTabsOrderToOriginal();
+            }
+        });
+    }
+
+    function initCodexrouteMobileTabSelect() {
+        const sel = document.getElementById('codexroute-mobile-tab-select');
+        if (!sel) {
+            return;
+        }
+        sel.addEventListener('change', function() {
+            const v = sel.value;
+            if (v) {
+                window.location.href = window.location.pathname + '?tab=' + encodeURIComponent(v);
+            }
+        });
+    }
+
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', function() {
+            initCodexrouteAdminTabs();
+            initCodexrouteMobileTabSelect();
+            initCodexrouteDatabaseResultsLimitListener();
+        });
+    } else {
+        initCodexrouteAdminTabs();
+        initCodexrouteMobileTabSelect();
+        initCodexrouteDatabaseResultsLimitListener();
+    }
+
     window.executeAction = executeAction;
     window.allowRoute = allowRoute;
     window.blockRoute = blockRoute;
+    window.scanRoutes = scanRoutes;
+    window.allowAllBlockedRoutes = allowAllBlockedRoutes;
     window.optimizeTable = optimizeTable;
     window.saveEncryptionConfig = saveEncryptionConfig;
     window.generateConfigFile = generateConfigFile;

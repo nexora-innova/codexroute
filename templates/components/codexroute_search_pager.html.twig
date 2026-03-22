@@ -1,0 +1,23 @@
+{#
+ # Pie de listado alineado con templates/components/pager.html.twig (GLPI nativo).
+ #}
+{% set pager_ul_id = pagination_ul_id|default(prefix ~ '-routes-pagination') %}
+{% set limitdropdown = include('components/dropdown/limit.html.twig', {
+   'no_onchange': true,
+   'select_class': 'search-limit-dropdown ' ~ limit_select_extra_class,
+   'href': '#',
+   'additional_params': ''
+}) %}
+
+<div class="flex-grow-1 d-flex flex-wrap flex-md-nowrap align-items-center justify-content-between mb-2 search-pager">
+    <span class="search-limit d-none d-md-block">
+        {{ __('%s rows / page')|format(limitdropdown)|raw }}
+    </span>
+    <span class="search-limit d-block d-md-none">
+        {{ limitdropdown|raw }}
+    </span>
+    <p class="m-0 text-muted d-none d-md-block page-infos" id="{{ prefix }}-page-infos-desktop"></p>
+    <p class="m-0 text-muted d-block d-md-none text-nowrap ms-2 page-infos" id="{{ prefix }}-page-infos-mobile"></p>
+
+    <ul class="pagination m-0 mt-sm-2 mt-md-0" id="{{ pager_ul_id }}"></ul>
+</div>

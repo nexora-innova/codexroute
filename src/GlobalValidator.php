@@ -28,6 +28,18 @@ class GlobalValidator
 
         self::$initialized = true;
 
+        // Cargar configuración anticipadamente para verificar si la encriptación está habilitada
+        $config_dir_early = GLPI_CONFIG_DIR ?? (GLPI_ROOT . '/config');
+        $config_file_early = $config_dir_early . '/codexroute/encryption_config.php';
+        if (file_exists($config_file_early)) {
+            include_once($config_file_early);
+        }
+
+        $encryption_enabled = defined('CODEXROUTE_ENCRYPTION_ENABLED') ? CODEXROUTE_ENCRYPTION_ENABLED : false;
+        if (!$encryption_enabled) {
+            return;
+        }
+
         // Interceptar redirecciones ANTES de validar
         self::interceptRedirects();
 
@@ -446,6 +458,8 @@ class GlobalValidator
                         ));
                     }
 
+                    self::logBlockedRoute($_SERVER['SCRIPT_NAME'] ?? '');
+
                     http_response_code(403);
 
                     if (class_exists('Html')) {
@@ -608,15 +622,14 @@ class GlobalValidator
                 return;
             }
 
-            $config_dir = GLPI_CONFIG_DIR ?? (GLPI_ROOT . '/config');
-            $routes_file = $config_dir . '/codexroute/allowed_routes.php';
-            $is_allowed = false;
+            $is_allowed    = false;
+            $allowed_routes = class_exists('GlpiPlugin\Codexroute\Config')
+                ? \GlpiPlugin\Codexroute\Config::getAllowedRoutes()
+                : self::readAllowedRoutesJson();
 
-            if (file_exists($routes_file)) {
-                $allowed_routes = include $routes_file;
-                if (is_array($allowed_routes)) {
-                    $is_allowed = in_array($script_basename_check, $allowed_routes) || in_array($script_name_check, $allowed_routes);
-                }
+            if (is_array($allowed_routes)) {
+                $is_allowed = in_array($script_basename_check, $allowed_routes, true)
+                    || in_array($script_name_check, $allowed_routes, true);
             }
 
             // Si la ruta está permitida, permitir el acceso
@@ -644,6 +657,8 @@ class GlobalValidator
                     $param_name
                 ));
             }
+
+            self::logBlockedRoute($script_name);
 
             http_response_code(403);
 
@@ -1059,5 +1074,88 @@ class GlobalValidator
         }
 
         return $url;
+    }
+
+    /**
+     * Lee el archivo de rutas permitidas en formato JSON (fallback cuando Config no está disponible).
+     */
+    private static function readAllowedRoutesJson(): array
+    {
+        $config_dir = GLPI_CONFIG_DIR ?? (GLPI_ROOT . '/config');
+
+        $json_file = $config_dir . '/codexroute/allowed_routes.json';
+        if (file_exists($json_file)) {
+            $content = @file_get_contents($json_file);
+            if ($content !== false && $content !== '') {
+                $routes = json_decode($content, true);
+                return is_array($routes) ? $routes : [];
+            }
+        }
+
+        $php_file = $config_dir . '/codexroute/allowed_routes.php';
+        if (file_exists($php_file)) {
+            $routes = @include $php_file;
+            return is_array($routes) ? $routes : [];
+        }
+
+        return [];
+    }
+
+    /**
+     * Registra en un archivo JSON las rutas que generaron un error 403.
+     * Evita duplicados y limita el log a 200 entradas únicas.
+     */
+    public static function logBlockedRoute(string $script_name): void
+    {
+        if (empty($script_name)) {
+            return;
+        }
+
+        $file = basename($script_name);
+        if (empty($file)) {
+            return;
+        }
+
+        $config_dir = GLPI_CONFIG_DIR ?? (GLPI_ROOT . '/config');
+        $log_file   = $config_dir . '/codexroute/blocked_routes.json';
+        $log_dir    = dirname($log_file);
+
+        if (!is_dir($log_dir)) {
+            @mkdir($log_dir, 0755, true);
+        }
+
+        $fp = @fopen($log_file, 'c+');
+        if (!$fp) {
+            return;
+        }
+
+        if (!flock($fp, LOCK_EX | LOCK_NB)) {
+            fclose($fp);
+            return;
+        }
+
+        $content  = stream_get_contents($fp);
+        $log      = (!empty($content)) ? (json_decode($content, true) ?? []) : [];
+        $existing = array_column($log, 'file');
+
+        if (!in_array($file, $existing, true)) {
+            $log[] = [
+                'file'      => $file,
+                'path'      => $script_name,
+                'timestamp' => time(),
+                'detected'  => true,
+            ];
+
+            if (count($log) > 200) {
+                $log = array_slice($log, -200);
+            }
+
+            ftruncate($fp, 0);
+            rewind($fp);
+            fwrite($fp, json_encode($log, JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT));
+        }
+
+        flock($fp, LOCK_UN);
+        fclose($fp);
     }
 }

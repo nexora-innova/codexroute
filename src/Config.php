@@ -28,7 +28,7 @@ class Config extends CommonDBTM {
         
         $menu = [
             'title' => self::getMenuName(),
-            'page'  => '/plugins/codexroute/front/config.form.php',
+            'page'  => \Plugin::getWebDir('codexroute') . '/front/config.form.php',
             'icon'  => 'ti ti-shield-lock',
         ];
         
@@ -91,8 +91,97 @@ class Config extends CommonDBTM {
         }
     }
     
+    /**
+     * Lista blanca de claves permitidas para la configuración de encriptación (evita inyección vía nombres de constantes).
+     */
+    private static function allowedEncryptionConfigKeys(): array {
+        return [
+            'encryption_enabled',
+            'strict_mode',
+            'log_numeric_ids',
+            'cache_size',
+            'cache_ttl',
+            'simple_max_range',
+            'simple_timeout',
+            'warn_simple',
+            'block_after_attempts',
+            'block_duration',
+            'min_length',
+            'max_length',
+            'log_security',
+            'normalized_time',
+        ];
+    }
+
+    /**
+     * Filtra la entrada a claves conocidas y aplica tipos seguros.
+     */
+    public static function filterEncryptionConfigInput(array $config): array {
+        $out = [];
+        foreach (self::allowedEncryptionConfigKeys() as $key) {
+            if (!array_key_exists($key, $config)) {
+                continue;
+            }
+            $out[$key] = self::normalizeEncryptionConfigValue($key, $config[$key]);
+        }
+        return $out;
+    }
+
+    /**
+     * Normaliza un valor de configuración según la clave esperada.
+     */
+    private static function normalizeEncryptionConfigValue(string $key, $value) {
+        $boolKeys = ['encryption_enabled', 'strict_mode', 'log_numeric_ids', 'log_security', 'warn_simple'];
+        if (in_array($key, $boolKeys, true)) {
+            if (is_bool($value)) {
+                return $value;
+            }
+            if ($value === '1' || $value === 1) {
+                return true;
+            }
+            if ($value === '0' || $value === 0 || $value === '' || $value === null) {
+                return false;
+            }
+            return filter_var($value, FILTER_VALIDATE_BOOLEAN);
+        }
+
+        $intKeys = [
+            'cache_size',
+            'cache_ttl',
+            'simple_max_range',
+            'block_after_attempts',
+            'block_duration',
+            'min_length',
+            'max_length',
+        ];
+        if (in_array($key, $intKeys, true)) {
+            return (int) $value;
+        }
+
+        if ($key === 'simple_timeout' || $key === 'normalized_time') {
+            return (float) $value;
+        }
+
+        return $value;
+    }
+
+    /**
+     * Convierte un valor al formato escalar almacenable en glpi_plugin_codexroute_configs.
+     */
+    private static function encryptionValueForStorage(string $key, $value): string {
+        $norm = self::normalizeEncryptionConfigValue($key, $value);
+        if (is_bool($norm)) {
+            return $norm ? '1' : '0';
+        }
+        if (is_int($norm) || is_float($norm)) {
+            return (string) $norm;
+        }
+        return (string) $norm;
+    }
+
     public static function getEncryptionConfig() {
         return [
+            'encryption_enabled'   => self::getValue('encryption_enabled', false),
             'strict_mode'          => self::getValue('strict_mode', false),
             'log_numeric_ids'      => self::getValue('log_numeric_ids', false),
             'cache_size'           => self::getValue('cache_size', 100),
@@ -110,8 +199,8 @@ class Config extends CommonDBTM {
     }
     
     public static function saveEncryptionConfig(array $config) {
-        foreach ($config as $key => $value) {
-            self::setValue($key, is_bool($value) ? ($value ? '1' : '0') : $value);
+        foreach (self::filterEncryptionConfigInput($config) as $key => $value) {
+            self::setValue($key, self::encryptionValueForStorage($key, $value));
         }
         return true;
     }
@@ -130,6 +219,7 @@ class Config extends CommonDBTM {
         $content .= "/**\n * Configuración de Encriptación de IDs - CodexRoute\n * Generado: " . date('Y-m-d H:i:s') . "\n */\n\n";
         
         $descriptions = [
+            'encryption_enabled'   => 'Activar encriptación de IDs en URLs',
             'strict_mode'          => 'Modo estricto: Rechaza IDs numéricos sin encriptar',
             'log_numeric_ids'      => 'Registrar cuando se recibe un ID sin encriptar',
             'cache_size'           => 'Tamaño máximo del caché',
@@ -144,25 +234,31 @@ class Config extends CommonDBTM {
             'log_security'         => 'Registrar eventos de seguridad',
             'normalized_time'      => 'Tiempo normalizado de respuesta en segundos',
         ];
-        
-        foreach ($config as $key => $value) {
-            $constant_name = 'CODEXROUTE_' . strtoupper($key);
-            $description = $descriptions[$key] ?? $key;
-            
-            $content .= "// $description\n";
-            
-            if (is_bool($value) || $value === '0' || $value === '1') {
-                $bool_val = ($value === true || $value === '1') ? 'true' : 'false';
-                $content .= "define('$constant_name', $bool_val);\n\n";
-            } elseif (is_numeric($value)) {
-                $content .= "define('$constant_name', $value);\n\n";
-            } else {
-                $escaped_value = addslashes($value);
-                $content .= "define('$constant_name', '$escaped_value');\n\n";
-            }
+
+        $merged = self::getEncryptionConfig();
+        foreach (self::filterEncryptionConfigInput($config) as $k => $v) {
+            $merged[$k] = $v;
         }
         
-        return file_put_contents($file_path, $content) !== false;
+        foreach (self::allowedEncryptionConfigKeys() as $key) {
+            if (!array_key_exists($key, $merged)) {
+                continue;
+            }
+            $constant_name = 'CODEXROUTE_' . strtoupper($key);
+            $description = $descriptions[$key] ?? $key;
+            $value = self::normalizeEncryptionConfigValue($key, $merged[$key]);
+            
+            $content .= "// $description\n";
+            $content .= 'define(' . var_export($constant_name, true) . ', ' . var_export($value, true) . ");\n\n";
+        }
+        
+        $written = file_put_contents($file_path, $content) !== false;
+
+        if ($written && function_exists('opcache_invalidate')) {
+            @opcache_invalidate($file_path, true);
+        }
+
+        return $written;
     }
     
     public static function configFileExists() {
@@ -171,30 +267,47 @@ class Config extends CommonDBTM {
         return file_exists($file_path);
     }
     
-    public static function getAllowedRoutes() {
+    public static function getAllowedRoutes(): array {
         $config_dir = GLPI_CONFIG_DIR ?? (GLPI_ROOT . '/config');
-        $routes_file = $config_dir . '/codexroute/allowed_routes.php';
-        
-        if (file_exists($routes_file)) {
-            $routes = include $routes_file;
+
+        $json_file = $config_dir . '/codexroute/allowed_routes.json';
+        if (file_exists($json_file)) {
+            $content = @file_get_contents($json_file);
+            if ($content !== false && $content !== '') {
+                $routes = json_decode($content, true);
+                return is_array($routes) ? $routes : [];
+            }
+        }
+
+        $php_file = $config_dir . '/codexroute/allowed_routes.php';
+        if (file_exists($php_file)) {
+            $routes = @include $php_file;
             return is_array($routes) ? $routes : [];
         }
-        
+
         return [];
     }
-    
-    public static function saveAllowedRoutes(array $routes) {
-        $config_dir = GLPI_CONFIG_DIR ?? (GLPI_ROOT . '/config');
+
+    public static function saveAllowedRoutes(array $routes): bool {
+        $config_dir        = GLPI_CONFIG_DIR ?? (GLPI_ROOT . '/config');
         $plugin_config_dir = $config_dir . '/codexroute';
-        
+
         if (!is_dir($plugin_config_dir)) {
             @mkdir($plugin_config_dir, 0755, true);
         }
-        
-        $routes_file = $plugin_config_dir . '/allowed_routes.php';
-        $content = "<?php\nreturn " . var_export($routes, true) . ";\n";
-        
-        return file_put_contents($routes_file, $content) !== false;
+
+        $json_file = $plugin_config_dir . '/allowed_routes.json';
+        $written   = file_put_contents(
+            $json_file,
+            json_encode(array_values($routes), JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT)
+        ) !== false;
+
+        $php_file = $plugin_config_dir . '/allowed_routes.php';
+        if (file_exists($php_file)) {
+            @unlink($php_file);
+        }
+
+        return $written;
     }
     
     public static function addAllowedRoute($route) {
